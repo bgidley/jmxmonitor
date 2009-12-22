@@ -1,0 +1,21 @@
+# This is the sample configuration file for JMX Monitor
+# In general PATH's are relative or absolute
+# This is read with commons-configuration and variable substitution is supported
+
+# List here the groups that will be used each group will get its own configuration scope/section
+jmxmonitor.groups=group1,group2
+
+# Group 1 Configuration
+# Poll interval in milliseconds
+jmxmonitor.group1.interval=5000
+# Path to monitor configuration
+jmxmonitor.group1.monitorConfiguration=monitor1.sample
+# Path to expressions
+jmxmonitor.group1.monitorConfiguration=expressions1.sample
+
+# Group 2 Configuration
+jmxmonitor.group2.interval=5000
+# Path to monitor configuration
+jmxmonitor.group2.monitorConfiguration=monitor1.sample
+# Path to monitor configuration
+jmxmonitor.group2.monitorConfiguration=expressions1.sample
