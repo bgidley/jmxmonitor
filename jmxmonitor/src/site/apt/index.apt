@@ -1,0 +1,16 @@
+  The JMX Monitor Project provides a daemon (or commandline) tool to monitor a series of JMX services.
+
+  The basic model is
+
+  * JMX View spawns N
+
+  ** Monitoring Groups which contain N
+
+  *** Monitors that gather data
+
+  *** Expressions that format data
+
+  * These are outputted to rolling log files for external tools (e.g. Nagios or Cacti) to process.
+
+
+
