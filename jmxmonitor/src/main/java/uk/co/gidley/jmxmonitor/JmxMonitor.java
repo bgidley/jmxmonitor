@@ -23,8 +23,13 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.tapestry5.ioc.IOCUtilities;
+import org.apache.tapestry5.ioc.Registry;
+import org.apache.tapestry5.ioc.RegistryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.co.gidley.jmxmonitor.services.JmxMonitorModule;
+import uk.co.gidley.jmxmonitor.services.Manager;
 
 import java.io.File;
 
@@ -50,8 +55,15 @@ public class JmxMonitor {
 			String configurationFile = cmd.getOptionValue("c");
 			System.out.println("ConfigurationFile is " + configurationFile);
 			File file = new File(configurationFile);
-			if (file.exists() && file.canRead()){
-				
+			if (file.exists() && file.canRead()) {
+				RegistryBuilder registryBuilder = new RegistryBuilder();
+				IOCUtilities.addDefaultModules(registryBuilder);
+				registryBuilder.add(JmxMonitorModule.class);
+				Registry registry = registryBuilder.build();
+				registry.performRegistryStartup();
+				Manager manager = registry.getService(Manager.class);
+				manager.initialise(configurationFile);
+				registry.shutdown();
 			} else {
 				logger.error("Unable to read configuration exiting {}", file);
 			}
