@@ -16,8 +16,17 @@
 
 package uk.co.gidley.jmxmonitor.services;
 
+import java.util.Map;
+
 /**
  * A expression combines the output of monitors into an output string
  */
 public interface Expression {
+
+	/**
+	 * Format the monitor results and return a string to output as the message.
+	 * The string may contain line feeds if that is desirable in the output
+	 * @param results
+	 */
+	public String formatMonitorResults(final Map<String, Object> results);
 }

@@ -1,0 +1,23 @@
+Configuration
+
+ The configuration is grouped into sections
+
+ * Jmx Monitor Global Configuration
+ This defines monitor groups that run periodically. Each group has a set of monitors (to gather data) and expressions (to output it).
+
+ ** Group Level monitor configuration
+
+ ** Group Level expression configuration
+
+ * Global logback configuration
+ The logback configuration is global, but the channels it outputs to are per group. The system ships with a default
+ configuration, where all output is placed in a single file. However you can easily configure it to seperate logging
+ into files per monitor group.
+
+* Jmx Monitor Global Configuration
+
+* Group Level Monitor Configuration
+
+* Group Level Expression Configuration
+
+* Logback Configuration

@@ -22,6 +22,14 @@ package uk.co.gidley.jmxmonitor.services;
  */
 public class Manager {
 	public void initialise(String configurationFile) {
+		// Read configuration file
+
+		// Configure Monitoring Group instances
+
+		// Spawn threads and run monitoring group
+
+		// Continue to monitor for failures. On failure stop group, restart it if possible
+
 		
 	}
 }

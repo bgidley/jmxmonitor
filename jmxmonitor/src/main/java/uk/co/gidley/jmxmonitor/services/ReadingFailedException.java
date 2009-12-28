@@ -14,10 +14,27 @@
  *    limitations under the License.
  */
 
-package uk.co.gidley.jmxmonitor.configuration;
+package uk.co.gidley.jmxmonitor.services;
+
+import org.apache.commons.lang.exception.NestableException;
 
 /**
- * Created by IntelliJ IDEA. User: ben Date: Dec 22, 2009 Time: 9:00:50 PM
+ * Thrown when a reading failed. This should wrap any exception thrown
  */
-public class JmxMonitorFactory {
+public class ReadingFailedException extends NestableException {
+	public ReadingFailedException() {
+		super();
+	}
+
+	public ReadingFailedException(String msg) {
+		super(msg);
+	}
+
+	public ReadingFailedException(Throwable cause) {
+		super(cause);
+	}
+
+	public ReadingFailedException(String msg, Throwable cause) {
+		super(msg, cause);
+	}
 }

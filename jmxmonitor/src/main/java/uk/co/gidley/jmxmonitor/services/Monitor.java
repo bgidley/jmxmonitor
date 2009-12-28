@@ -16,8 +16,35 @@
 
 package uk.co.gidley.jmxmonitor.services;
 
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+
 /**
  * A monitor retrieves data from a remote source
+ * <p/>
+ * Monitors are initialised by their monitoring group. On initialisation they are passed details of what to monitor and
+ * the mbeanconnection.
+ * <p/>
+ * Monitors don't need to recover from failed connections. They should throw a reading failed exception. Once this has
+ * occurred the controlling process will not run that monitor again. It will disgard it and initialise a replacement.
  */
 public interface Monitor {
+
+	public void initialise(String name, ObjectName objectName, String attributeName,
+			MBeanServerConnection jmxConnection);
+
+	/**
+	 * The name of the monitor This is defined in the scope of the monitor group
+	 *
+	 * @return
+	 */
+	public String getName();
+
+	/**
+	 * The reading is typically a base type or a String. Other items can be used but you need to be sure EL can handle
+	 * them
+	 *
+	 * @return
+	 */
+	public Object getReading() throws ReadingFailedException;
 }
