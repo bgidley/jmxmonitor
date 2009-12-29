@@ -19,12 +19,20 @@ package uk.co.gidley.jmxmonitor;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import uk.co.gidley.jmxmonitor.services.Manager;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.Date;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -71,13 +79,63 @@ public class JmxMonitorTest {
 	}
 
 	@Test
-	public void testJmxMonitorValidOption() {
+	public void testJmxMonitorValidOption() throws InterruptedException, IOException {
+		Thread jmxMonitor = new Thread(new RunningJmxMonitor(), "JmxMonitor");
+		jmxMonitor.start();
 
-		JmxMonitor.main(new String[] { "jmxmonitor", "-c", "out.txt" });
-		String output = outputStream.toString();
-		assertThat(output, not(containsString("usage: jmxMonitor\n" +
-				" -c <arg>   Configuration Path")));
-		assertThat(output, containsString("ConfigurationFile is out.txt"));
+		// Jmx Monitor should start and go into a loop doing nothing
+		// Check for startup within 10 seconds
+		long currentTime = (new Date()).getTime();
+		final ThreadMXBean thbean = ManagementFactory.getThreadMXBean();
+		boolean threadFound = false;
+
+		while (currentTime + 10 * 1000 > (new Date()).getTime()) {
+			ThreadInfo[] threadInfos = thbean.getThreadInfo(thbean.getAllThreadIds());
+			for (ThreadInfo threadInfo : threadInfos) {
+				if (threadInfo.getThreadName().equals(Manager.SHUTDOWN_MONITOR_THREAD)) {
+					threadFound = true;
+					break;
+				}
+			}
+			Thread.sleep(500);
+		}
+		assertThat(threadFound, is(true));
+
+		Socket socket = new Socket("localhost", 8001);
+		PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
+		printWriter.write("stop");
+		printWriter.flush();
+
+		// The controlling process should stop in at most 5 seconds
+		currentTime = (new Date()).getTime();
+		boolean stopped = false;
+
+		jmxMonitor.join(5000);
+		assertThat(jmxMonitor.isAlive(), is(false));
+
+		// Finally verify the socket thread shut down
+		threadFound = false;
+		ThreadInfo[] threadInfos = thbean.getThreadInfo(thbean.getAllThreadIds());
+		for (ThreadInfo threadInfo : threadInfos) {
+			if (threadInfo.getThreadName().equals(Manager.SHUTDOWN_MONITOR_THREAD)) {
+				threadFound = true;
+				break;
+			}
+		}
+		assertThat(threadFound, is(not(true)));
+
+	}
+
+
+	private class RunningJmxMonitor implements Runnable {
+		@Override
+		public void run() {
+			JmxMonitor.main(new String[] { "jmxmonitor", "-c", "src/test/resources/noopConfiguration.properties" });
+			String output = outputStream.toString();
+			assertThat(output, not(containsString("usage: jmxMonitor\n" +
+					" -c <arg>   Configuration Path")));
+			assertThat(output, containsString("ConfigurationFile is out.txt"));
+		}
 	}
 
 	@AfterMethod

@@ -5,6 +5,10 @@
 # List here the groups that will be used each group will get its own configuration scope/section
 jmxmonitor.groups=group1,group2
 
+# Stop port and key - telnet to this port and send key to stop it
+jmxmonitor.stopport=8001
+jmxmonitor.stopkey=stop
+
 # Group 1 Configuration
 # Poll interval in milliseconds
 jmxmonitor.group1.interval=5000

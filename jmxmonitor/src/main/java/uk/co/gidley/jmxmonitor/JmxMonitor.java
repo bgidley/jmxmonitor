@@ -28,6 +28,7 @@ import org.apache.tapestry5.ioc.Registry;
 import org.apache.tapestry5.ioc.RegistryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.co.gidley.jmxmonitor.services.InitialisationException;
 import uk.co.gidley.jmxmonitor.services.JmxMonitorModule;
 import uk.co.gidley.jmxmonitor.services.Manager;
 
@@ -73,6 +74,9 @@ public class JmxMonitor {
 			logger.error("Exception occured {}", e);
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp("jmxMonitor", options);
+		} catch (InitialisationException e) {
+			logger.error("{}", e);
+			throw new RuntimeException(e);
 		}
 
 		System.out.println("Exiting JMX Monitor");

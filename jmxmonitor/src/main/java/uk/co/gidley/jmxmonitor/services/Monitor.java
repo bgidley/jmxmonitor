@@ -35,7 +35,6 @@ public interface Monitor {
 
 	/**
 	 * The name of the monitor This is defined in the scope of the monitor group
-	 *
 	 * @return
 	 */
 	public String getName();
