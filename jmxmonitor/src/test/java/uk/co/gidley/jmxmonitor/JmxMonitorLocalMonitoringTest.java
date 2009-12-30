@@ -21,6 +21,10 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import uk.co.gidley.jmxmonitor.services.Manager;
 
+import javax.management.MBeanServer;
+import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
+import javax.management.remote.JMXServiceURL;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -29,16 +33,17 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Date;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
- * Created by IntelliJ IDEA. User: ben Date: Dec 22, 2009 Time: 7:48:44 PM
+ * Created by IntelliJ IDEA. User: ben Date: Dec 30, 2009 Time: 8:12:56 AM
  */
-public class JmxMonitorTest {
+public class JmxMonitorLocalMonitoringTest {
 	private ByteArrayOutputStream outputStream;
 	private PrintStream out;
 
@@ -50,37 +55,16 @@ public class JmxMonitorTest {
 	}
 
 	@Test
-	public void testJmxMonitorMissingArg() {
+	public void testLocalMonitoring() throws IOException, InterruptedException {
+		MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+		JMXConnectorServer jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(
+				new JMXServiceURL("service:jmx:rmi:///jndi/rmi:///JmxMonitorLocalMonitoringTestMBeanServer"), null,
+				mBeanServer);
 
-		JmxMonitor.main(new String[] { "jmxmonitor", "-c" });
-		assertThat(outputStream.toString(), containsString("usage: jmxMonitor\n" +
-				" -c <arg>   Configuration Path"));
-
-	}
-
-	@Test
-	public void testJmxMonitorMissingOption() {
-
-		JmxMonitor.main(new String[] { "jmxmonitor" });
-		assertThat(outputStream.toString(), containsString("usage: jmxMonitor\n" +
-				" -c <arg>   Configuration Path"));
-
-	}
-
-	@Test
-	public void testJmxMonitorSpareOption() {
-
-		JmxMonitor.main(new String[] { "jmxmonitor", "-c", "out.txt", "-d" });
-		assertThat(outputStream.toString(), containsString("usage: jmxMonitor\n" +
-				" -c <arg>   Configuration Path"));
-
-	}
-
-	@Test
-	public void testJmxMonitorValidOption() throws InterruptedException, IOException {
 		Thread jmxMonitor = new Thread(new RunningJmxMonitor(), "JmxMonitor");
 		jmxMonitor.start();
 
+		// Wait for it to actually start
 		// Jmx Monitor should start and go into a loop doing nothing
 		// Check for startup within 10 seconds
 		long currentTime = (new Date()).getTime();
@@ -97,43 +81,28 @@ public class JmxMonitorTest {
 			}
 			Thread.sleep(500);
 		}
-		assertThat(threadFound, is(true));
+
 		String output = outputStream.toString();
 		assertThat(output, not(containsString("usage: jmxMonitor\n" +
 				" -c <arg>   Configuration Path")));
-		assertThat(output, containsString("ConfigurationFile is src/test/resources/noopConfiguration.properties"));
+		assertThat(output, containsString("ConfigurationFile is src/test/resources/jmxLocalMonitoringTestConfiguration.properties"));
+		assertThat(threadFound, is(true));
+		
 
+
+		// Shutdown
 
 		Socket socket = new Socket("localhost", 8001);
 		PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
 		printWriter.write("stop");
 		printWriter.flush();
-
-		// The controlling process should stop in at most 5 seconds
-		currentTime = (new Date()).getTime();
-		boolean stopped = false;
-
-		jmxMonitor.join(5000);
-		assertThat(jmxMonitor.isAlive(), is(false));
-
-		// Finally verify the socket thread shut down
-		threadFound = false;
-		ThreadInfo[] threadInfos = thbean.getThreadInfo(thbean.getAllThreadIds());
-		for (ThreadInfo threadInfo : threadInfos) {
-			if (threadInfo.getThreadName().equals(Manager.SHUTDOWN_MONITOR_THREAD)) {
-				threadFound = true;
-				break;
-			}
-		}
-		assertThat(threadFound, is(not(true)));
-
 	}
-
 
 	private class RunningJmxMonitor implements Runnable {
 		@Override
 		public void run() {
-			JmxMonitor.main(new String[] { "jmxmonitor", "-c", "src/test/resources/noopConfiguration.properties" });
+			// Now start JMX Monitor configured to run against local host
+			JmxMonitor.main(new String[] { "jmxmonitor", "-c", "src/test/resources/jmxLocalMonitoringTestConfiguration.properties" });
 		}
 	}
 

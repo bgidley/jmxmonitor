@@ -15,11 +15,11 @@ jmxmonitor.group1.interval=5000
 # Path to monitor configuration
 jmxmonitor.group1.monitorConfiguration=monitor1.sample
 # Path to expressions
-jmxmonitor.group1.monitorConfiguration=expressions1.sample
+jmxmonitor.group1.expressionConfiguration=expressions1.sample
 
 # Group 2 Configuration
 jmxmonitor.group2.interval=5000
 # Path to monitor configuration
 jmxmonitor.group2.monitorConfiguration=monitor1.sample
 # Path to monitor configuration
-jmxmonitor.group2.monitorConfiguration=expressions1.sample
+jmxmonitor.group2.expressionConfiguration=expressions1.sample
