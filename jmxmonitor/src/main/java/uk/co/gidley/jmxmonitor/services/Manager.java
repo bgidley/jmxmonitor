@@ -22,8 +22,8 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -31,6 +31,9 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
@@ -40,6 +43,8 @@ public class Manager {
 	private static final Logger logger = LoggerFactory.getLogger(Manager.class);
 	public static final String SHUTDOWN_MONITOR_THREAD = "ShutdownMonitor";
 	private Boolean running = true;
+	private Map<String, MonitoringGroupHolder> monitoringGroups = new HashMap<String, MonitoringGroupHolder>();
+	private ThreadGroup threadGroup = new ThreadGroup("MonitoringGroups");
 
 	public void initialise(String configurationFile) throws InitialisationException {
 
@@ -53,13 +58,33 @@ public class Manager {
 			shutdownThread.start();
 
 			// Configure Monitoring Group instances
+			List<String> monitoringGroupNames = config.getList("jmxmonitor.groups");
 
-			// Spawn threads and run monitoring group
+			for (String groupName : monitoringGroupNames) {
+				logger.debug("Started initialising {}", groupName);
+				initialiseMonitoringGroup(groupName, config);
+				logger.debug("Completed initialising {}", groupName);
+			}
+
+
+			// Start threads to begin monitoring
+			logger.info("Configuration complete starting all monitors");
+			for (String groupName : monitoringGroups.keySet()) {
+				Thread thread = monitoringGroups.get(groupName).getThread();
+				thread.start();
+			}
 
 			// Continue to monitor for failures or stop message. On failure stop group, restart it if possible
-			while (running){
+			while (running) {
+				for (String groupName : monitoringGroups.keySet()) {
+					MonitoringGroup monitoringGroup = monitoringGroups.get(groupName).getMonitoringGroup();
+					if (!monitoringGroup.isAlive()){
+						restartMonitoringGroup(groupName, config);
+					}
+				}
+
 				// Stop if the shutdown thread has triggered. 
-				if (!shutdownThread.isAlive()){
+				if (!shutdownThread.isAlive()) {
 					running = false;
 				}
 
@@ -83,6 +108,53 @@ public class Manager {
 
 	}
 
+	private void restartMonitoringGroup(String groupName,
+			CompositeConfiguration config) throws InterruptedException, InitialisationException {
+		logger.warn("Monitoring Group is dead: {}. Restarting", groupName);
+
+		// Tidy up
+		Thread oldThread = monitoringGroups.get(groupName).getThread();
+		if (oldThread.isAlive()){
+			// Problem try to interrupt. This should force an exist
+			oldThread.interrupt();
+			oldThread.join(5000);
+			if (oldThread.isAlive()){
+				logger.error("Unable to stop monitor thread {}", groupName);
+				throw new RuntimeException("Unable to stop monitor thread " + groupName);
+			}
+		}
+		monitoringGroups.remove(groupName);
+
+		// Restart
+		initialiseMonitoringGroup(groupName, config);
+		Thread restartThread = monitoringGroups.get(groupName).getThread();
+		restartThread.start();
+	}
+
+	private void initialiseMonitoringGroup(String groupName,
+			CompositeConfiguration config) throws InitialisationException {
+		String monitorFile = config.getString(groupName + ".monitorConfiguration");
+		String expressionFile = config.getString(groupName + ".expressionConfiguration");
+		Long interval = config.getLong(groupName + ".interval");
+
+		File monitor = findConfigurationFile(monitorFile);
+		File expression = findConfigurationFile(expressionFile);
+
+		MonitoringGroup monitoringGroup = new MonitoringGroup();
+		monitoringGroup.initialise(groupName, monitor, expression, interval);
+		Thread thread = new Thread(threadGroup, monitoringGroup, groupName);
+		monitoringGroups.put(groupName, new MonitoringGroupHolder(monitoringGroup, thread));
+	}
+
+	private File findConfigurationFile(String configurationFile) throws InitialisationException {
+		File configuration = new File(configurationFile);
+		if (configuration.exists()) {
+			throw new InitialisationException(
+					"Referenced Configuration File not found:" + configuration.getAbsolutePath());
+		}
+		return configuration;
+	}
+
 	private class ShutdownRunner implements Runnable {
 		private ServerSocketChannel serverSocketChannel;
 		private ByteBuffer dbuf = ByteBuffer.allocateDirect(1024);
@@ -96,7 +168,6 @@ public class Manager {
 			stopKey = config.getString("jmxmonitor.stopkey");
 			serverSocketChannel = ServerSocketChannel.open();
 			serverSocketChannel.socket().bind(new InetSocketAddress("127.0.0.1", stopPort));
-
 		}
 
 		@Override
@@ -121,6 +192,35 @@ public class Manager {
 				throw new RuntimeException(e);
 			}
 
+		}
+	}
+
+	/**
+	 * Used to hold the monitoring group
+	 */
+	private class MonitoringGroupHolder{
+		private MonitoringGroup monitoringGroup;
+		private Thread thread;
+
+		private MonitoringGroupHolder(MonitoringGroup monitoringGroup, Thread thread) {
+			this.monitoringGroup = monitoringGroup;
+			this.thread = thread;
+		}
+
+		public MonitoringGroup getMonitoringGroup() {
+			return monitoringGroup;
+		}
+
+		public void setMonitoringGroup(MonitoringGroup monitoringGroup) {
+			this.monitoringGroup = monitoringGroup;
+		}
+
+		public Thread getThread() {
+			return thread;
+		}
+
+		public void setThread(Thread thread) {
+			this.thread = thread;
 		}
 	}
 

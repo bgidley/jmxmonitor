@@ -37,4 +37,9 @@ public class ReadingFailedException extends NestableException {
 	public ReadingFailedException(String msg, Throwable cause) {
 		super(msg, cause);
 	}
+
+	@Override
+	 public String toString() {
+		return "Failed to read monitor";
+	}
 }

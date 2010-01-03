@@ -16,8 +16,28 @@
 
 package uk.co.gidley.jmxmonitor.services;
 
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import uk.co.gidley.jmxmonitor.services.monitors.SimpleJmxMonitor;
+
+import javax.management.MBeanServerConnection;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A monitoring group combines a set of monitors and expressions to output data to a logger
@@ -25,19 +45,101 @@ import java.util.Date;
 public class MonitoringGroup implements Runnable {
 
 	private boolean stopping = false;
-	private int interval;
+	private long interval;
 	private long lastRun;
+	private List<MonitorUrlHolder> monitorUrlHolders = new ArrayList<MonitorUrlHolder>();
+	private CompositeConfiguration monitorsConfiguration = new CompositeConfiguration();
+	private CompositeConfiguration expressionsConfiguration = new CompositeConfiguration();
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	private String name;
+
+	private Logger outputLogger;
+	private static final Logger logger = LoggerFactory.getLogger(MonitoringGroup.class);
+	private static final String MONITORING_GROUP = "monitoringGroup.";
 
 	/**
 	 * Called to initialise the monitoring group. The group should use this to construct expensive objects, validate
 	 * configuration and prepare to run.
 	 *
-	 * @param monitorsConfiguration
-	 * @param expressionsConfiguration
-	 * @param intervalInMilliseconds
+	 * @param monitorsConfigurationFile	The monitors file
+	 * @param expressionsConfigurationFile The expression file
+	 * @param intervalInMilliseconds	   The interval to poll in milliseconds
 	 */
-	public void initialise(File monitorsConfiguration, File expressionsConfiguration, int intervalInMilliseconds) {
-		interval = intervalInMilliseconds;
+	public void initialise(String name, File monitorsConfigurationFile, File expressionsConfigurationFile,
+			long intervalInMilliseconds) throws InitialisationException {
+		try {
+			interval = intervalInMilliseconds;
+			this.name = name;
+			outputLogger = LoggerFactory.getLogger(MONITORING_GROUP + name);
+
+			monitorsConfiguration.addConfiguration(new PropertiesConfiguration(monitorsConfigurationFile));
+			expressionsConfiguration.addConfiguration(new PropertiesConfiguration(expressionsConfigurationFile));
+
+			List<String> monitorUrls = monitorsConfiguration.getList("jmxmonitor.connections");
+			for (String monitorUrlKey : monitorUrls) {
+				initialiseMonitorUrl(monitorUrlKey, monitorsConfiguration);
+			}
+		} catch (ConfigurationException e) {
+			logger.error("{}", e);
+			throw new InitialisationException(e);
+		} catch (MalformedObjectNameException e) {
+			logger.error("{}", e);
+			throw new InitialisationException(e);
+		} catch (MalformedURLException e) {
+			logger.error("{}", e);
+			throw new InitialisationException(e);
+		}
+	}
+
+	/**
+	 * Initialise the monitor. If possible we start the JMX connection now. If not we create a placeholder.
+	 *
+	 * @param monitorUrlKey
+	 * @param monitorsConfiguration
+	 * @throws MalformedObjectNameException
+	 * @throws MalformedURLException
+	 */
+	private void initialiseMonitorUrl(String monitorUrlKey,
+			CompositeConfiguration monitorsConfiguration) throws MalformedObjectNameException, MalformedURLException {
+
+		String url = monitorsConfiguration.getString(monitorUrlKey);
+		try {
+			// Create JMX connection
+			JMXServiceURL serviceUrl = new JMXServiceURL(url);
+			JMXConnector jmxc = JMXConnectorFactory.connect(serviceUrl, null);
+			MonitorUrlHolder monitorUrlHolder = new MonitorUrlHolder(monitorUrlKey, jmxc.getMBeanServerConnection());
+			monitorUrlHolders.add(monitorUrlHolder);
+
+			// Parse monitors inside this
+			Iterator<String> monitorKeys = monitorsConfiguration.getKeys("jmxmonitor." + monitorUrlKey);
+			while (monitorKeys.hasNext()) {
+				String key = monitorKeys.next();
+				// each key is a monitor
+				Monitor monitor = new SimpleJmxMonitor();
+				// key is jmxmonitor.url.name  e.g. 10 + 1 + 1 + url.length
+				String monitorName = key.substring(12 + monitorUrlKey.length());
+				// Value of key is java.lang:type=Memory/HeapMemoryUsage!Heap
+				String[] objectName = monitorsConfiguration.getString(key).split("!");
+				monitor.initialise(monitorName, new ObjectName(objectName[0]), objectName[1],
+						monitorUrlHolder.getmBeanServerConnection());
+				monitorUrlHolder.getMonitors().add(monitor);
+			}
+		} catch (IOException e) {
+			if (e instanceof MalformedURLException) {
+				throw (MalformedURLException) e;
+			}
+			logger.warn("Unable to connect to {}, {}", monitorUrlKey, e);
+			MonitorUrlHolder monitorUrlHolder = new MonitorUrlHolder(monitorUrlKey, null);
+			monitorUrlHolders.add(monitorUrlHolder);
+		}
 	}
 
 	/**
@@ -66,8 +168,28 @@ public class MonitoringGroup implements Runnable {
 
 				long currentRun = new Date().getTime();
 
-				if (lastRun + interval > currentRun ){
+				if (lastRun + interval > currentRun) {
 					// Run Monitors
+					for (MonitorUrlHolder monitorUrlHolder : monitorUrlHolders) {
+						if (monitorUrlHolder.getmBeanServerConnection() == null){
+							initialiseMonitorUrl(monitorUrlHolder.getUrl(), monitorsConfiguration);
+						}  else {
+							Map<String, Object> results  = new HashMap<String, Object>();
+							for (Monitor monitor : monitorUrlHolder.getMonitors()){
+								try {
+									results.put(monitor.getName(), monitor.getReading());
+								} catch (ReadingFailedException e) {
+									results.put(monitor.getName(), e);
+									logger.error("{}", e);
+								}
+							}
+							// TODO pass this into EL for output
+							for (String key : results.keySet()) {
+								outputLogger.info("{}",results.get(key));
+							}
+						}
+					}
+
 
 					// Run and output expressions
 					lastRun = currentRun;
@@ -75,10 +197,51 @@ public class MonitoringGroup implements Runnable {
 				Thread.sleep(4000);
 			}
 		} catch (InterruptedException e) {
-			//
+			logger.info("Interrupted", e);
+		} catch (MalformedObjectNameException e) {
+			logger.error("{}", e);
+			throw new RuntimeException(e);
+		} catch (MalformedURLException e) {
+			logger.error("{}", e);
+			throw new RuntimeException(e);
 		} finally {
 			// Tidy up all monitors / expressions IF possible
 		}
 
+	}
+
+	private class MonitorUrlHolder {
+		private String url;
+		private List<Monitor> monitors = new ArrayList<Monitor>();
+		private MBeanServerConnection mBeanServerConnection;
+
+		private MonitorUrlHolder(String url, MBeanServerConnection mBeanServerConnection) {
+			this.url = url;
+			this.mBeanServerConnection = mBeanServerConnection;
+		}
+
+		public String getUrl() {
+			return url;
+		}
+
+		public void setUrl(String url) {
+			this.url = url;
+		}
+
+		public List<Monitor> getMonitors() {
+			return monitors;
+		}
+
+		public void setMonitors(List<Monitor> monitors) {
+			this.monitors = monitors;
+		}
+
+		public MBeanServerConnection getmBeanServerConnection() {
+			return mBeanServerConnection;
+		}
+
+		public void setmBeanServerConnection(MBeanServerConnection mBeanServerConnection) {
+			this.mBeanServerConnection = mBeanServerConnection;
+		}
 	}
 }

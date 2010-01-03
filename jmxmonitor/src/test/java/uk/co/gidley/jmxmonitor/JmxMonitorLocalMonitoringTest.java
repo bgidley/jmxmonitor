@@ -94,7 +94,7 @@ public class JmxMonitorLocalMonitoringTest {
 
 		Socket socket = new Socket("localhost", 8001);
 		PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
-		printWriter.write("stop");
+		printWriter.write("stop");                                                                              	
 		printWriter.flush();
 	}
 
