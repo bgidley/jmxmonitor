@@ -53,6 +53,7 @@ public class MonitoringGroup implements Runnable {
 	private String name;
 
 	private boolean alive = true;
+	private static final String URL = ".url";
 
 	public MonitoringGroup() {
 		monitorsConfiguration.setThrowExceptionOnMissing(true);
@@ -118,7 +119,7 @@ public class MonitoringGroup implements Runnable {
 			CompositeConfiguration monitorsConfiguration) throws MalformedObjectNameException, MalformedURLException {
 		logger.debug("Initialising Monitor Connection {}", monitorUrlKey);
 
-		String url = monitorsConfiguration.getString(Manager.PROPERTY_PREFIX + monitorUrlKey + ".url");
+		String url = monitorsConfiguration.getString(Manager.PROPERTY_PREFIX + monitorUrlKey + URL);
 		try {
 			// Create JMX connection
 			JMXServiceURL serviceUrl = new JMXServiceURL(url);
@@ -127,20 +128,20 @@ public class MonitoringGroup implements Runnable {
 			MonitoringGroup.MonitorUrlHolder monitorUrlHolder = monitorUrlHolders.get(monitorUrlKey);
 			monitorUrlHolder.setmBeanServerConnection(jmxc.getMBeanServerConnection());
 
-
 			// Parse monitors inside this
+			List<String> loadedMonitors = new ArrayList<String>();
 			Iterator<String> monitorKeys = monitorsConfiguration.getKeys(Manager.PROPERTY_PREFIX + monitorUrlKey);
 			while (monitorKeys.hasNext()) {
 				String key = monitorKeys.next();
-				// each key is a monitor
-				Monitor monitor = new SimpleJmxMonitor();
-				// key is jmxmonitor.url.name  e.g. 10 + 1 + 1 + url.length
-				String monitorName = key.substring(12 + monitorUrlKey.length());
-				// Value of key is java.lang:type=Memory/HeapMemoryUsage!Heap
-				String[] objectName = monitorsConfiguration.getString(key).split("!");
-				monitor.initialise(monitorName, new ObjectName(objectName[0]), objectName[1],
-						monitorUrlHolder.getmBeanServerConnection());
-				monitorUrlHolder.getMonitors().add(monitor);
+				if (!key.endsWith(URL)) {
+					String monitorName = key.substring(Manager.PROPERTY_PREFIX.length() + monitorUrlKey.length() + 1,
+							key.lastIndexOf("."));
+					// Only load each on once (there will be 2 keys)
+					if (!loadedMonitors.contains(monitorName)) {
+						constructMonitor(monitorUrlKey, monitorsConfiguration, monitorUrlHolder, monitorName);
+						loadedMonitors.add(monitorName);
+					}
+				}
 			}
 		} catch (IOException e) {
 			if (e instanceof MalformedURLException) {
@@ -148,6 +149,20 @@ public class MonitoringGroup implements Runnable {
 			}
 			logger.warn("Unable to connect to {}, {}", monitorUrlKey, e);
 		}
+	}
+
+	private void constructMonitor(String monitorUrlKey, CompositeConfiguration monitorsConfiguration,
+			MonitorUrlHolder monitorUrlHolder, String monitorName) throws MalformedObjectNameException {
+		Monitor monitor = new SimpleJmxMonitor();
+		// Value of key is java.lang:type=Memory/HeapMemoryUsage!Heap
+		String keyPrefix = Manager.PROPERTY_PREFIX + monitorUrlKey + "." + monitorName;
+		String objectName = monitorsConfiguration.getString(
+				keyPrefix + ".objectName");
+		String attribute = monitorsConfiguration.getString(
+				keyPrefix + ".attribute");
+		monitor.initialise(monitorName, new ObjectName(objectName), attribute,
+				monitorUrlHolder.getmBeanServerConnection());
+		monitorUrlHolder.getMonitors().add(monitor);
 	}
 
 	/**
@@ -184,8 +199,10 @@ public class MonitoringGroup implements Runnable {
 					for (String monitorUrlHolderKey : monitorUrlHolders.keySet()) {
 						MonitorUrlHolder monitorUrlHolder = monitorUrlHolders.get(monitorUrlHolderKey);
 						if (monitorUrlHolder.getmBeanServerConnection() == null) {
+							logger.debug("Reinitialising monitors as they are not initialised");
 							initialiseMonitorUrl(monitorUrlHolder.getUrl(), monitorsConfiguration);
 						} else {
+							logger.debug("Executing Monitors");
 							Map<String, Object> results = new HashMap<String, Object>();
 							for (Monitor monitor : monitorUrlHolder.getMonitors()) {
 								try {

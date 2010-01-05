@@ -17,6 +17,7 @@
 package uk.co.gidley.jmxmonitor.services;
 
 import org.apache.tapestry5.ioc.ServiceBinder;
+import org.apache.tapestry5.ioc.services.RegistryShutdownHub;
 
 /**
  * Created by IntelliJ IDEA. User: ben Date: Dec 22, 2009 Time: 9:30:24 PM
@@ -25,6 +26,13 @@ public class JmxMonitorModule {
 
 	public static void bind(ServiceBinder binder) {
 		binder.bind(Manager.class);
-		binder.bind(InternalJmx.class);
+	}
+
+	public static InternalJmx buildInternalJmx( RegistryShutdownHub shutdownHub){
+
+		InternalJmx internalJmx = new InternalJmx();
+		shutdownHub.addRegistryShutdownListener(internalJmx);
+
+		return internalJmx;
 	}
 }

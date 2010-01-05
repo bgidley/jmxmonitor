@@ -1,4 +1,0 @@
-jmxmonitor.connections=url1
-
-jmxmonitor.ur11.url=service:jmx:rmi:///jndi/rmi://localhost:1024/jmxrmi
-jmxmonitor.url1.heap=java.lang:type=Memory/HeapMemoryUsage!Heap
