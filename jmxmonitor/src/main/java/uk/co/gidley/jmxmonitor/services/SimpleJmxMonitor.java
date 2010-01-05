@@ -14,20 +14,15 @@
  *    limitations under the License.
  */
 
-package uk.co.gidley.jmxmonitor.services.monitors;
+package uk.co.gidley.jmxmonitor.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.gidley.jmxmonitor.services.Monitor;
 import uk.co.gidley.jmxmonitor.services.ReadingFailedException;
 
-import javax.management.AttributeNotFoundException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
-import javax.management.ReflectionException;
-import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA. User: ben Date: Dec 23, 2009 Time: 7:04:11 PM

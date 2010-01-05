@@ -16,12 +16,12 @@
 
 package uk.co.gidley.jmxmonitor.services;
 
+import com.sun.script.javascript.RhinoScriptEngine;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.co.gidley.jmxmonitor.services.monitors.SimpleJmxMonitor;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
@@ -29,6 +29,8 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -54,10 +56,15 @@ public class MonitoringGroup implements Runnable {
 
 	private boolean alive = true;
 	private static final String URL = ".url";
+	private List<String> expressions = new ArrayList<String>();
+	private ScriptEngineManager scriptEngineManager;
 
 	public MonitoringGroup() {
 		monitorsConfiguration.setThrowExceptionOnMissing(true);
 		expressionsConfiguration.setThrowExceptionOnMissing(true);
+		scriptEngineManager = new ScriptEngineManager();
+
+
 	}
 
 	public String getName() {
@@ -90,11 +97,8 @@ public class MonitoringGroup implements Runnable {
 			monitorsConfiguration.addConfiguration(new PropertiesConfiguration(monitorsConfigurationFile));
 			expressionsConfiguration.addConfiguration(new PropertiesConfiguration(expressionsConfigurationFile));
 
-			List<String> monitorUrls = monitorsConfiguration.getList(Manager.PROPERTY_PREFIX + "connections");
-			for (String monitorUrlKey : monitorUrls) {
-				monitorUrlHolders.put(monitorUrlKey, new MonitorUrlHolder(monitorUrlKey));
-				initialiseMonitorUrl(monitorUrlKey, monitorsConfiguration);
-			}
+			initialiseMonitors();
+			initialiseExpressions();
 		} catch (ConfigurationException e) {
 			logger.error("{}", e);
 			throw new InitialisationException(e);
@@ -104,6 +108,26 @@ public class MonitoringGroup implements Runnable {
 		} catch (MalformedURLException e) {
 			logger.error("{}", e);
 			throw new InitialisationException(e);
+		}
+	}
+
+	private void initialiseExpressions() {
+
+		Iterator<String> keys = expressionsConfiguration.getKeys();
+		while (keys.hasNext()) {
+			String key = keys.next();
+			String expression = expressionsConfiguration.getString(key);
+			expressions.add(expression);
+		}
+
+
+	}
+
+	private void initialiseMonitors() throws MalformedObjectNameException, MalformedURLException {
+		List<String> monitorUrls = monitorsConfiguration.getList(Manager.PROPERTY_PREFIX + "connections");
+		for (String monitorUrlKey : monitorUrls) {
+			monitorUrlHolders.put(monitorUrlKey, new MonitorUrlHolder(monitorUrlKey));
+			initialiseMonitorUrl(monitorUrlKey, monitorsConfiguration);
 		}
 	}
 
@@ -212,10 +236,20 @@ public class MonitoringGroup implements Runnable {
 									logger.error("{}", e);
 								}
 							}
-							// TODO pass this into EL for output
+							RhinoScriptEngine jsEngine = (RhinoScriptEngine) scriptEngineManager.getEngineByName(
+									"JavaScript");
 							for (String key : results.keySet()) {
-								outputLogger.info("{}", results.get(key));
+								jsEngine.put(key, results.get(key));
 							}
+							for (String expression : expressions) {
+								try {
+									Object output = jsEngine.eval(expression);
+									outputLogger.info("{}", output);
+								} catch (ScriptException e) {
+									logger.warn("Script Error {}", e);
+								}
+							}
+
 						}
 					}
 
