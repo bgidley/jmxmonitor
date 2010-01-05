@@ -21,7 +21,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import uk.co.gidley.jmxmonitor.services.Manager;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
 import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
@@ -55,11 +60,16 @@ public class JmxMonitorLocalMonitoringTest {
 	}
 
 	@Test
-	public void testLocalMonitoring() throws IOException, InterruptedException {
+	public void testLocalMonitoring() throws IOException, InterruptedException, MBeanRegistrationException, InstanceAlreadyExistsException, NotCompliantMBeanException, MalformedObjectNameException {
 		MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 		JMXConnectorServer jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(
 				new JMXServiceURL("service:jmx:rmi:///jndi/rmi:///JmxMonitorLocalMonitoringTestMBeanServer"), null,
 				mBeanServer);
+
+		ObjectName connectorServerName = ObjectName
+				.getInstance("connectors:protocol=rmi");
+		mBeanServer.registerMBean(jmxConnectorServer, connectorServerName);
+
 
 		Thread jmxMonitor = new Thread(new RunningJmxMonitor(), "JmxMonitor");
 		jmxMonitor.start();
@@ -85,16 +95,16 @@ public class JmxMonitorLocalMonitoringTest {
 		String output = outputStream.toString();
 		assertThat(output, not(containsString("usage: jmxMonitor\n" +
 				" -c <arg>   Configuration Path")));
-		assertThat(output, containsString("ConfigurationFile is src/test/resources/jmxLocalMonitoringTestConfiguration.properties"));
+		assertThat(output, containsString(
+				"ConfigurationFile is src/test/resources/jmxLocalMonitoringTestConfiguration.properties"));
 		assertThat(threadFound, is(true));
-		
 
 
 		// Shutdown
 
 		Socket socket = new Socket("localhost", 8001);
 		PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
-		printWriter.write("stop");                                                                              	
+		printWriter.write("stop");
 		printWriter.flush();
 	}
 
@@ -102,7 +112,8 @@ public class JmxMonitorLocalMonitoringTest {
 		@Override
 		public void run() {
 			// Now start JMX Monitor configured to run against local host
-			JmxMonitor.main(new String[] { "jmxmonitor", "-c", "src/test/resources/jmxLocalMonitoringTestConfiguration.properties" });
+			JmxMonitor.main(
+					new String[] { "jmxmonitor", "-c", "src/test/resources/jmxLocalMonitoringTestConfiguration.properties" });
 		}
 	}
 

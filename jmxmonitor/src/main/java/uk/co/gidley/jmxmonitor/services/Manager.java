@@ -22,11 +22,22 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnectorServer;
+import javax.management.remote.JMXConnectorServerFactory;
+import javax.management.remote.JMXServiceURL;
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.Charset;
@@ -45,20 +56,46 @@ public class Manager {
 	private Boolean running = true;
 	private Map<String, MonitoringGroupHolder> monitoringGroups = new HashMap<String, MonitoringGroupHolder>();
 	private ThreadGroup threadGroup = new ThreadGroup("MonitoringGroups");
+	public static final String PROPERTY_PREFIX = "jmxmonitor.";
+	private InternalJmx interalJmx;
+
+	public Manager(InternalJmx internalJmx){
+		this.interalJmx = internalJmx;
+	}
+
 
 	public void initialise(String configurationFile) throws InitialisationException {
 
+
+		// Read configuration file
+		CompositeConfiguration config = new CompositeConfiguration();
+		config.setThrowExceptionOnMissing(true);
 		try {
-			// Read configuration file
-			CompositeConfiguration config = new CompositeConfiguration();
 			config.addConfiguration(new PropertiesConfiguration(configurationFile));
-			// Start shutdown socket service
-			ShutdownRunner shutdownRunner = new ShutdownRunner(config);
-			Thread shutdownThread = new Thread(shutdownRunner, SHUTDOWN_MONITOR_THREAD);
+		} catch (ConfigurationException e) {
+			logger.error("{}", e);
+			throw new InitialisationException(e);
+		}
+
+		interalJmx.start(config);
+
+
+		// Start shutdown socket service
+		ShutdownRunner shutdownRunner = null;
+		try {
+			shutdownRunner = new ShutdownRunner(config);
+		} catch (IOException e) {
+			logger.error("{}", e);
+			throw new InitialisationException(e);
+		}
+		Thread shutdownThread = new Thread(shutdownRunner, SHUTDOWN_MONITOR_THREAD);
+
+		try {
+
 			shutdownThread.start();
 
 			// Configure Monitoring Group instances
-			List<String> monitoringGroupNames = config.getList("jmxmonitor.groups");
+			List<String> monitoringGroupNames = config.getList(PROPERTY_PREFIX + "groups");
 
 			for (String groupName : monitoringGroupNames) {
 				logger.debug("Started initialising {}", groupName);
@@ -78,7 +115,7 @@ public class Manager {
 			while (running) {
 				for (String groupName : monitoringGroups.keySet()) {
 					MonitoringGroup monitoringGroup = monitoringGroups.get(groupName).getMonitoringGroup();
-					if (!monitoringGroup.isAlive()){
+					if (!monitoringGroup.isAlive()) {
 						restartMonitoringGroup(groupName, config);
 					}
 				}
@@ -92,18 +129,16 @@ public class Manager {
 			}
 
 
-		} catch (ConfigurationException e) {
-			logger.error("{}", e);
-			throw new InitialisationException(e);
 		} catch (NoSuchElementException e) {
-			logger.error("{}", e);
-			throw new InitialisationException(e);
-		} catch (IOException e) {
 			logger.error("{}", e);
 			throw new InitialisationException(e);
 		} catch (InterruptedException e) {
 			logger.error("{}", e);
 			throw new RuntimeException(e);
+		} finally {
+			// Must shutdown the shutdown thread
+			shutdownThread.interrupt();
+
 		}
 
 	}
@@ -114,11 +149,11 @@ public class Manager {
 
 		// Tidy up
 		Thread oldThread = monitoringGroups.get(groupName).getThread();
-		if (oldThread.isAlive()){
+		if (oldThread.isAlive()) {
 			// Problem try to interrupt. This should force an exist
 			oldThread.interrupt();
 			oldThread.join(5000);
-			if (oldThread.isAlive()){
+			if (oldThread.isAlive()) {
 				logger.error("Unable to stop monitor thread {}", groupName);
 				throw new RuntimeException("Unable to stop monitor thread " + groupName);
 			}
@@ -133,9 +168,9 @@ public class Manager {
 
 	private void initialiseMonitoringGroup(String groupName,
 			CompositeConfiguration config) throws InitialisationException {
-		String monitorFile = config.getString(groupName + ".monitorConfiguration");
-		String expressionFile = config.getString(groupName + ".expressionConfiguration");
-		Long interval = config.getLong(groupName + ".interval");
+		String monitorFile = config.getString(PROPERTY_PREFIX + groupName + ".monitorConfiguration");
+		String expressionFile = config.getString(PROPERTY_PREFIX + groupName + ".expressionConfiguration");
+		Long interval = config.getLong(PROPERTY_PREFIX + groupName + ".interval");
 
 		File monitor = findConfigurationFile(monitorFile);
 		File expression = findConfigurationFile(expressionFile);
@@ -148,7 +183,7 @@ public class Manager {
 
 	private File findConfigurationFile(String configurationFile) throws InitialisationException {
 		File configuration = new File(configurationFile);
-		if (configuration.exists()) {
+		if (!configuration.exists()) {
 			throw new InitialisationException(
 					"Referenced Configuration File not found:" + configuration.getAbsolutePath());
 		}
@@ -187,6 +222,9 @@ public class Manager {
 						serverSocketChannel.close();
 					}
 				}
+			} catch (ClosedByInterruptException e) {
+				// Ok just a shutdown of the main process
+				logger.debug("Closing shutdown thread {}", e);
 			} catch (IOException e) {
 				logger.error("{}", e);
 				throw new RuntimeException(e);
@@ -198,7 +236,7 @@ public class Manager {
 	/**
 	 * Used to hold the monitoring group
 	 */
-	private class MonitoringGroupHolder{
+	private class MonitoringGroupHolder {
 		private MonitoringGroup monitoringGroup;
 		private Thread thread;
 

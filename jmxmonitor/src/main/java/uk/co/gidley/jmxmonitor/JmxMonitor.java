@@ -63,8 +63,12 @@ public class JmxMonitor {
 				Registry registry = registryBuilder.build();
 				registry.performRegistryStartup();
 				Manager manager = registry.getService(Manager.class);
-				manager.initialise(configurationFile);
-				registry.shutdown();
+				try {
+					manager.initialise(configurationFile);
+				}
+				finally {
+					registry.shutdown();
+				}
 			} else {
 				logger.error("Unable to read configuration exiting {}", file);
 			}

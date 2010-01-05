@@ -25,5 +25,6 @@ public class JmxMonitorModule {
 
 	public static void bind(ServiceBinder binder) {
 		binder.bind(Manager.class);
+		binder.bind(InternalJmx.class);
 	}
 }
