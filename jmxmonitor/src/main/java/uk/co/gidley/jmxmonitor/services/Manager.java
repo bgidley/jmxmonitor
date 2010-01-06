@@ -17,6 +17,7 @@
 package uk.co.gidley.jmxmonitor.services;
 
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.gidley.jmxmonitor.monitoring.MonitoringGroup;
@@ -48,7 +49,7 @@ public class Manager {
 	public static final String PROPERTY_PREFIX = "jmxmonitor.";
 	private MainConfiguration mainConfiguration;
 
-	public Manager(MainConfiguration mainConfiguration){
+	public Manager(MainConfiguration mainConfiguration) {
 		this.mainConfiguration = mainConfiguration;
 	}
 
@@ -69,12 +70,15 @@ public class Manager {
 			shutdownThread.start();
 
 			// Configure Monitoring Group instances
-			List<String> monitoringGroupNames = mainConfiguration.getConfiguration().getList(PROPERTY_PREFIX + "groups");
+			List<String> monitoringGroupNames = mainConfiguration.getConfiguration().getList(
+					PROPERTY_PREFIX + "groups");
 
 			for (String groupName : monitoringGroupNames) {
-				logger.debug("Started initialising {}", groupName);
-				initialiseMonitoringGroup(groupName, mainConfiguration.getConfiguration());
-				logger.debug("Completed initialising {}", groupName);
+				if (!StringUtils.isEmpty(groupName)) {
+					logger.debug("Started initialising {}", groupName);
+					initialiseMonitoringGroup(groupName, mainConfiguration.getConfiguration());
+					logger.debug("Completed initialising {}", groupName);
+				}
 			}
 
 

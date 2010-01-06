@@ -61,16 +61,6 @@ public class JmxMonitorLocalMonitoringTest {
 
 	@Test
 	public void testLocalMonitoring() throws IOException, InterruptedException, MBeanRegistrationException, InstanceAlreadyExistsException, NotCompliantMBeanException, MalformedObjectNameException {
-		MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-		JMXConnectorServer jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(
-				new JMXServiceURL("service:jmx:rmi:///jndi/rmi:///JmxMonitorLocalMonitoringTestMBeanServer"), null,
-				mBeanServer);
-
-		ObjectName connectorServerName = ObjectName
-				.getInstance("connectors:protocol=rmi");
-		mBeanServer.registerMBean(jmxConnectorServer, connectorServerName);
-
-
 		Thread jmxMonitor = new Thread(new RunningJmxMonitor(), "JmxMonitor");
 		jmxMonitor.start();
 

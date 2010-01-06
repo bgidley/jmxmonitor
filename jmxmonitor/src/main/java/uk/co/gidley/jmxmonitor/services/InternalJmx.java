@@ -16,7 +16,6 @@
 
 package uk.co.gidley.jmxmonitor.services;
 
-import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tapestry5.ioc.annotations.EagerLoad;
 import org.apache.tapestry5.ioc.services.RegistryShutdownHub;
@@ -25,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
@@ -40,6 +40,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Iterator;
 
 /**
  * Holds the internal JMX configuration Created by IntelliJ IDEA. User: ben Date: Jan 5, 2010 Time: 10:08:37 AM
@@ -50,25 +51,38 @@ public class InternalJmx implements RegistryShutdownListener {
 	private final String PROPERTY_PREFIX;
 	private JMXConnectorServer jmxConnectorServer;
 	private Registry registry;
+	private final ObjectName connectorServerName;
+	private final MBeanServer MBEAN_SERVER;
+	private static final String LOCAL_RMI_PORT = "localRmiPort";
 
-	public InternalJmx(MainConfiguration configuration, RegistryShutdownHub registryShutdownHub) throws InitialisationException {
+	public InternalJmx(MainConfiguration configuration,
+			RegistryShutdownHub registryShutdownHub) throws InitialisationException, MalformedObjectNameException {
 		//TODO make this a symbol
 		this.PROPERTY_PREFIX = Manager.PROPERTY_PREFIX;
 		registryShutdownHub.addRegistryShutdownListener(this);
+		connectorServerName = ObjectName
+				.getInstance("connectors:protocol=rmi");
+		MBEAN_SERVER = ManagementFactory.getPlatformMBeanServer();
+
 		start(configuration.getConfiguration());
-
-
 	}
 
 	public void start(Configuration configuration) throws InitialisationException {
 
-		startRmiRegistry(configuration);
-		startJmxConnector(configuration);
+		Iterator<String> keys = configuration.getKeys();
+		while (keys.hasNext()) {
+			String key = keys.next();
+			if (key.equals(PROPERTY_PREFIX + LOCAL_RMI_PORT)) {
+				startRmiRegistry(configuration);
+				startJmxConnector(configuration);
+			}
+		}
+
 	}
 
 	private void startRmiRegistry(Configuration configuration) throws InitialisationException {
 		try {
-			int port = configuration.getInt(PROPERTY_PREFIX + "localRmiPort");
+			int port = configuration.getInt(PROPERTY_PREFIX + LOCAL_RMI_PORT);
 			logger.debug("Creating RMI Registry on {}", port);
 			registry = LocateRegistry.createRegistry(port);
 		} catch (RemoteException e) {
@@ -79,24 +93,16 @@ public class InternalJmx implements RegistryShutdownListener {
 
 	private void startJmxConnector(Configuration configuration) throws InitialisationException {
 		try {
-			MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-			String url = configuration.getString(PROPERTY_PREFIX + "localJmx", null);
-			if (url != null) {
-				logger.debug("Initialising local JMX server on URL {}", url);
-				JMXServiceURL address = new JMXServiceURL(url);
-				jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(
-						address, null,
-						mBeanServer);
+			String url = configuration.getString(PROPERTY_PREFIX + "localJmx");
+			logger.debug("Initialising local JMX server on URL {}", url);
+			JMXServiceURL address = new JMXServiceURL(url);
+			jmxConnectorServer = JMXConnectorServerFactory.newJMXConnectorServer(
+					address, null,
+					MBEAN_SERVER);
 
-				ObjectName connectorServerName = ObjectName
-						.getInstance("connectors:protocol=rmi");
-				mBeanServer.registerMBean(jmxConnectorServer, connectorServerName);
-				jmxConnectorServer.start();
-			}
+			MBEAN_SERVER.registerMBean(jmxConnectorServer, connectorServerName);
+			jmxConnectorServer.start();
 		} catch (IOException e) {
-			logger.error("{}", e);
-			throw new InitialisationException(e);
-		} catch (MalformedObjectNameException e) {
 			logger.error("{}", e);
 			throw new InitialisationException(e);
 		} catch (InstanceAlreadyExistsException e) {
@@ -128,6 +134,14 @@ public class InternalJmx implements RegistryShutdownListener {
 			} catch (NoSuchObjectException e) {
 				logger.error("{}", e);
 			}
+		}
+
+		try {
+			MBEAN_SERVER.unregisterMBean(connectorServerName);
+		} catch (InstanceNotFoundException e) {
+			logger.error("{}", e);
+		} catch (MBeanRegistrationException e) {
+			logger.error("{}", e);
 		}
 
 	}
