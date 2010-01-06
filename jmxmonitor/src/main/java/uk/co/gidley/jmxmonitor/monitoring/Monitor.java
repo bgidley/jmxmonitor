@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package uk.co.gidley.jmxmonitor.services;
+package uk.co.gidley.jmxmonitor.monitoring;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;

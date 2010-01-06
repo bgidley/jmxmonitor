@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package uk.co.gidley.jmxmonitor.services;
+package uk.co.gidley.jmxmonitor.monitoring;
 
 import com.sun.script.javascript.RhinoScriptEngine;
 import org.apache.commons.configuration.CompositeConfiguration;
@@ -22,6 +22,9 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.co.gidley.jmxmonitor.services.InitialisationException;
+import uk.co.gidley.jmxmonitor.services.Manager;
+import uk.co.gidley.jmxmonitor.monitoring.SimpleJmxMonitor;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;

@@ -14,12 +14,12 @@
  *    limitations under the License.
  */
 
-package uk.co.gidley.jmxmonitor.services;
+package uk.co.gidley.jmxmonitor.monitoring;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.co.gidley.jmxmonitor.services.Monitor;
-import uk.co.gidley.jmxmonitor.services.ReadingFailedException;
+import uk.co.gidley.jmxmonitor.monitoring.Monitor;
+import uk.co.gidley.jmxmonitor.monitoring.ReadingFailedException;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;

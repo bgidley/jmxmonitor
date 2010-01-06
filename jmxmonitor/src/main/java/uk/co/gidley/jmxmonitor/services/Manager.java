@@ -16,24 +16,13 @@
 
 package uk.co.gidley.jmxmonitor.services;
 
-import org.apache.commons.configuration.CompositeConfiguration;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.co.gidley.jmxmonitor.monitoring.MonitoringGroup;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnectorServer;
-import javax.management.remote.JMXConnectorServerFactory;
-import javax.management.remote.JMXServiceURL;
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -57,33 +46,18 @@ public class Manager {
 	private Map<String, MonitoringGroupHolder> monitoringGroups = new HashMap<String, MonitoringGroupHolder>();
 	private ThreadGroup threadGroup = new ThreadGroup("MonitoringGroups");
 	public static final String PROPERTY_PREFIX = "jmxmonitor.";
-	private InternalJmx interalJmx;
+	private MainConfiguration mainConfiguration;
 
-	public Manager(InternalJmx internalJmx){
-		this.interalJmx = internalJmx;
+	public Manager(MainConfiguration mainConfiguration){
+		this.mainConfiguration = mainConfiguration;
 	}
 
 
 	public void initialise(String configurationFile) throws InitialisationException {
-
-
-		// Read configuration file
-		CompositeConfiguration config = new CompositeConfiguration();
-		config.setThrowExceptionOnMissing(true);
-		try {
-			config.addConfiguration(new PropertiesConfiguration(configurationFile));
-		} catch (ConfigurationException e) {
-			logger.error("{}", e);
-			throw new InitialisationException(e);
-		}
-
-		interalJmx.start(config);
-
-
 		// Start shutdown socket service
 		ShutdownRunner shutdownRunner = null;
 		try {
-			shutdownRunner = new ShutdownRunner(config);
+			shutdownRunner = new ShutdownRunner(mainConfiguration.getConfiguration());
 		} catch (IOException e) {
 			logger.error("{}", e);
 			throw new InitialisationException(e);
@@ -95,11 +69,11 @@ public class Manager {
 			shutdownThread.start();
 
 			// Configure Monitoring Group instances
-			List<String> monitoringGroupNames = config.getList(PROPERTY_PREFIX + "groups");
+			List<String> monitoringGroupNames = mainConfiguration.getConfiguration().getList(PROPERTY_PREFIX + "groups");
 
 			for (String groupName : monitoringGroupNames) {
 				logger.debug("Started initialising {}", groupName);
-				initialiseMonitoringGroup(groupName, config);
+				initialiseMonitoringGroup(groupName, mainConfiguration.getConfiguration());
 				logger.debug("Completed initialising {}", groupName);
 			}
 
@@ -116,7 +90,7 @@ public class Manager {
 				for (String groupName : monitoringGroups.keySet()) {
 					MonitoringGroup monitoringGroup = monitoringGroups.get(groupName).getMonitoringGroup();
 					if (!monitoringGroup.isAlive()) {
-						restartMonitoringGroup(groupName, config);
+						restartMonitoringGroup(groupName, mainConfiguration.getConfiguration());
 					}
 				}
 
@@ -144,7 +118,7 @@ public class Manager {
 	}
 
 	private void restartMonitoringGroup(String groupName,
-			CompositeConfiguration config) throws InterruptedException, InitialisationException {
+			Configuration config) throws InterruptedException, InitialisationException {
 		logger.warn("Monitoring Group is dead: {}. Restarting", groupName);
 
 		// Tidy up
@@ -167,7 +141,7 @@ public class Manager {
 	}
 
 	private void initialiseMonitoringGroup(String groupName,
-			CompositeConfiguration config) throws InitialisationException {
+			Configuration config) throws InitialisationException {
 		String monitorFile = config.getString(PROPERTY_PREFIX + groupName + ".monitorConfiguration");
 		String expressionFile = config.getString(PROPERTY_PREFIX + groupName + ".expressionConfiguration");
 		Long interval = config.getLong(PROPERTY_PREFIX + groupName + ".interval");
@@ -198,7 +172,7 @@ public class Manager {
 		private String stopKey;
 
 
-		ShutdownRunner(CompositeConfiguration config) throws IOException {
+		ShutdownRunner(Configuration config) throws IOException {
 			int stopPort = config.getInt("jmxmonitor.stopport");
 			stopKey = config.getString("jmxmonitor.stopkey");
 			serverSocketChannel = ServerSocketChannel.open();

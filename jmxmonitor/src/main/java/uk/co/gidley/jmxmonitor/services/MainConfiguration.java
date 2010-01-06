@@ -16,30 +16,19 @@
 
 package uk.co.gidley.jmxmonitor.services;
 
-import org.apache.commons.lang.exception.NestableException;
+import org.apache.commons.configuration.Configuration;
 
 /**
- * Thrown when a reading failed. This should wrap any exception thrown
+ * Created by IntelliJ IDEA. User: ben Date: Jan 6, 2010 Time: 8:38:59 PM
  */
-public class ReadingFailedException extends NestableException {
-	public ReadingFailedException() {
-		super();
+public class MainConfiguration {
+ 	private Configuration  configuration;
+
+	public Configuration getConfiguration() {
+		return configuration;
 	}
 
-	public ReadingFailedException(String msg) {
-		super(msg);
-	}
-
-	public ReadingFailedException(Throwable cause) {
-		super(cause);
-	}
-
-	public ReadingFailedException(String msg, Throwable cause) {
-		super(msg, cause);
-	}
-
-	@Override
-	 public String toString() {
-		return "Failed to read monitor";
+	public void setConfiguration(Configuration configuration) {
+		this.configuration = configuration;
 	}
 }

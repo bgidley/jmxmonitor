@@ -14,24 +14,32 @@
  *    limitations under the License.
  */
 
-package uk.co.gidley.jmxmonitor.services;
+package uk.co.gidley.jmxmonitor.monitoring;
 
-import org.apache.tapestry5.ioc.ServiceBinder;
-import org.apache.tapestry5.ioc.services.RegistryShutdownHub;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.lang.exception.NestableException;
 
 /**
- * Created by IntelliJ IDEA. User: ben Date: Dec 22, 2009 Time: 9:30:24 PM
+ * Thrown when a reading failed. This should wrap any exception thrown
  */
-public class JmxMonitorModule {
-	private static final Logger logger = LoggerFactory.getLogger(JmxMonitorModule.class);
-
-	public static void bind(ServiceBinder binder) {
-		binder.bind(Manager.class);
-		binder.bind(MainConfiguration.class);
-		binder.bind(InternalJmx.class);
+public class ReadingFailedException extends NestableException {
+	public ReadingFailedException() {
+		super();
 	}
 
+	public ReadingFailedException(String msg) {
+		super(msg);
+	}
 
+	public ReadingFailedException(Throwable cause) {
+		super(cause);
+	}
+
+	public ReadingFailedException(String msg, Throwable cause) {
+		super(msg, cause);
+	}
+
+	@Override
+	 public String toString() {
+		return "Failed to read monitor";
+	}
 }

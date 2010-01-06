@@ -23,6 +23,9 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.tapestry5.ioc.IOCUtilities;
 import org.apache.tapestry5.ioc.Registry;
 import org.apache.tapestry5.ioc.RegistryBuilder;
@@ -30,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.gidley.jmxmonitor.services.InitialisationException;
 import uk.co.gidley.jmxmonitor.services.JmxMonitorModule;
+import uk.co.gidley.jmxmonitor.services.MainConfiguration;
 import uk.co.gidley.jmxmonitor.services.Manager;
 
 import java.io.File;
@@ -61,6 +65,7 @@ public class JmxMonitor {
 				IOCUtilities.addDefaultModules(registryBuilder);
 				registryBuilder.add(JmxMonitorModule.class);
 				Registry registry = registryBuilder.build();
+				parseMainConfiguration(configurationFile, registry);
 				registry.performRegistryStartup();
 				Manager manager = registry.getService(Manager.class);
 				try {
@@ -84,5 +89,20 @@ public class JmxMonitor {
 		}
 
 		System.out.println("Exiting JMX Monitor");
+	}
+
+	private static void parseMainConfiguration(String configurationFile,
+			Registry registry) throws InitialisationException {
+		MainConfiguration mainConfiguration = registry.getService(MainConfiguration.class);
+		// Read configuration file
+		CompositeConfiguration config = new CompositeConfiguration();
+		config.setThrowExceptionOnMissing(true);
+		try {
+			config.addConfiguration(new PropertiesConfiguration(configurationFile));
+		} catch (ConfigurationException e) {
+			logger.error("{}", e);
+			throw new InitialisationException(e);
+		}
+		mainConfiguration.setConfiguration(config);
 	}
 }

@@ -17,6 +17,9 @@
 package uk.co.gidley.jmxmonitor.services;
 
 import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.Configuration;
+import org.apache.tapestry5.ioc.annotations.EagerLoad;
+import org.apache.tapestry5.ioc.services.RegistryShutdownHub;
 import org.apache.tapestry5.ioc.services.RegistryShutdownListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,24 +44,29 @@ import java.rmi.server.UnicastRemoteObject;
 /**
  * Holds the internal JMX configuration Created by IntelliJ IDEA. User: ben Date: Jan 5, 2010 Time: 10:08:37 AM
  */
+@EagerLoad
 public class InternalJmx implements RegistryShutdownListener {
 	private static final Logger logger = LoggerFactory.getLogger(InternalJmx.class);
 	private final String PROPERTY_PREFIX;
 	private JMXConnectorServer jmxConnectorServer;
 	private Registry registry;
 
-	public InternalJmx() {
+	public InternalJmx(MainConfiguration configuration, RegistryShutdownHub registryShutdownHub) throws InitialisationException {
 		//TODO make this a symbol
 		this.PROPERTY_PREFIX = Manager.PROPERTY_PREFIX;
+		registryShutdownHub.addRegistryShutdownListener(this);
+		start(configuration.getConfiguration());
+
+
 	}
 
-	public void start(CompositeConfiguration configuration) throws InitialisationException {
+	public void start(Configuration configuration) throws InitialisationException {
 
 		startRmiRegistry(configuration);
 		startJmxConnector(configuration);
 	}
 
-	private void startRmiRegistry(CompositeConfiguration configuration) throws InitialisationException {
+	private void startRmiRegistry(Configuration configuration) throws InitialisationException {
 		try {
 			int port = configuration.getInt(PROPERTY_PREFIX + "localRmiPort");
 			logger.debug("Creating RMI Registry on {}", port);
@@ -69,7 +77,7 @@ public class InternalJmx implements RegistryShutdownListener {
 		}
 	}
 
-	private void startJmxConnector(CompositeConfiguration configuration) throws InitialisationException {
+	private void startJmxConnector(Configuration configuration) throws InitialisationException {
 		try {
 			MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 			String url = configuration.getString(PROPERTY_PREFIX + "localJmx", null);
