@@ -19,7 +19,7 @@ package uk.co.gidley.jmxmonitor;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import uk.co.gidley.jmxmonitor.services.Manager;
+import uk.co.gidley.jmxmonitor.services.ThreadManager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,7 +29,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Date;
 
 import static org.hamcrest.Matchers.*;
@@ -90,7 +89,7 @@ public class JmxMonitorTest {
 		while (currentTime + 10 * 1000 > (new Date()).getTime()) {
 			ThreadInfo[] threadInfos = thbean.getThreadInfo(thbean.getAllThreadIds());
 			for (ThreadInfo threadInfo : threadInfos) {
-				if (threadInfo.getThreadName().equals(Manager.SHUTDOWN_MONITOR_THREAD)) {
+				if (threadInfo.getThreadName().equals(ThreadManager.SHUTDOWN_MONITOR_THREAD)) {
 					threadFound = true;
 					break;
 				}
@@ -120,7 +119,7 @@ public class JmxMonitorTest {
 		threadFound = false;
 		ThreadInfo[] threadInfos = thbean.getThreadInfo(thbean.getAllThreadIds());
 		for (ThreadInfo threadInfo : threadInfos) {
-			if (threadInfo.getThreadName().equals(Manager.SHUTDOWN_MONITOR_THREAD)) {
+			if (threadInfo.getThreadName().equals(ThreadManager.SHUTDOWN_MONITOR_THREAD)) {
 				threadFound = true;
 				break;
 			}

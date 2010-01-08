@@ -17,7 +17,6 @@
 package uk.co.gidley.jmxmonitor.services;
 
 import org.apache.tapestry5.ioc.ServiceBinder;
-import org.apache.tapestry5.ioc.services.RegistryShutdownHub;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +27,7 @@ public class JmxMonitorModule {
 	private static final Logger logger = LoggerFactory.getLogger(JmxMonitorModule.class);
 
 	public static void bind(ServiceBinder binder) {
-		binder.bind(Manager.class);
+		binder.bind(ThreadManager.class);
 		binder.bind(MainConfiguration.class);
 		binder.bind(InternalJmx.class);
 	}

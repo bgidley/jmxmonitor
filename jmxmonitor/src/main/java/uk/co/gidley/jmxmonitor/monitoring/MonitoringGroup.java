@@ -22,7 +22,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.co.gidley.jmxmonitor.services.InitialisationException;
-import uk.co.gidley.jmxmonitor.services.Manager;
+import uk.co.gidley.jmxmonitor.services.ThreadManager;
 
 import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
@@ -126,7 +126,7 @@ public class MonitoringGroup implements Runnable {
 	}
 
 	private void initialiseMonitors() throws MalformedObjectNameException, MalformedURLException {
-		List<String> monitorUrls = monitorsConfiguration.getList(Manager.PROPERTY_PREFIX + "connections");
+		List<String> monitorUrls = monitorsConfiguration.getList(ThreadManager.PROPERTY_PREFIX + "connections");
 		for (String monitorUrlKey : monitorUrls) {
 			monitorUrlHolders.put(monitorUrlKey, new MonitorUrlHolder(monitorUrlKey));
 			initialiseMonitorUrl(monitorUrlKey, monitorsConfiguration);
@@ -145,7 +145,7 @@ public class MonitoringGroup implements Runnable {
 			CompositeConfiguration monitorsConfiguration) throws MalformedObjectNameException, MalformedURLException {
 		logger.debug("Initialising Monitor Connection {}", monitorUrlKey);
 
-		String url = monitorsConfiguration.getString(Manager.PROPERTY_PREFIX + monitorUrlKey + URL);
+		String url = monitorsConfiguration.getString(ThreadManager.PROPERTY_PREFIX + monitorUrlKey + URL);
 		try {
 			// Create JMX connection
 			JMXServiceURL serviceUrl = new JMXServiceURL(url);
@@ -156,11 +156,11 @@ public class MonitoringGroup implements Runnable {
 
 			// Parse monitors inside this
 			List<String> loadedMonitors = new ArrayList<String>();
-			Iterator<String> monitorKeys = monitorsConfiguration.getKeys(Manager.PROPERTY_PREFIX + monitorUrlKey);
+			Iterator<String> monitorKeys = monitorsConfiguration.getKeys(ThreadManager.PROPERTY_PREFIX + monitorUrlKey);
 			while (monitorKeys.hasNext()) {
 				String key = monitorKeys.next();
 				if (!key.endsWith(URL)) {
-					String monitorName = key.substring(Manager.PROPERTY_PREFIX.length() + monitorUrlKey.length() + 1,
+					String monitorName = key.substring(ThreadManager.PROPERTY_PREFIX.length() + monitorUrlKey.length() + 1,
 							key.lastIndexOf("."));
 					// Only load each on once (there will be 2 keys)
 					if (!loadedMonitors.contains(monitorName)) {
@@ -181,7 +181,7 @@ public class MonitoringGroup implements Runnable {
 			MonitorUrlHolder monitorUrlHolder, String monitorName) throws MalformedObjectNameException {
 		Monitor monitor = new SimpleJmxMonitor();
 		// Value of key is java.lang:type=Memory/HeapMemoryUsage!Heap
-		String keyPrefix = Manager.PROPERTY_PREFIX + monitorUrlKey + "." + monitorName;
+		String keyPrefix = ThreadManager.PROPERTY_PREFIX + monitorUrlKey + "." + monitorName;
 		String objectName = monitorsConfiguration.getString(
 				keyPrefix + ".objectName");
 		String attribute = monitorsConfiguration.getString(

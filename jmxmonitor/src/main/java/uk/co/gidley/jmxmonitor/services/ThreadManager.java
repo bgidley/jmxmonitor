@@ -40,8 +40,8 @@ import java.util.NoSuchElementException;
 /**
  * The manager service is responsible for managing the main thread loop and controlling the monitors
  */
-public class Manager {
-	private static final Logger logger = LoggerFactory.getLogger(Manager.class);
+public class ThreadManager {
+	private static final Logger logger = LoggerFactory.getLogger(ThreadManager.class);
 	public static final String SHUTDOWN_MONITOR_THREAD = "ShutdownMonitor";
 	private Boolean running = true;
 	private Map<String, MonitoringGroupHolder> monitoringGroups = new HashMap<String, MonitoringGroupHolder>();
@@ -49,12 +49,19 @@ public class Manager {
 	public static final String PROPERTY_PREFIX = "jmxmonitor.";
 	private MainConfiguration mainConfiguration;
 
-	public Manager(MainConfiguration mainConfiguration) {
+	public ThreadManager(MainConfiguration mainConfiguration) {
 		this.mainConfiguration = mainConfiguration;
 	}
 
+	/**
+	 * Stop this asap (NOT sync)
+	 */
+	public void stop() {
+		this.running = false;
+	}
 
-	public void initialise(String configurationFile) throws InitialisationException {
+
+	public void initialise() throws InitialisationException {
 		// Start shutdown socket service
 		ShutdownRunner shutdownRunner = null;
 		try {

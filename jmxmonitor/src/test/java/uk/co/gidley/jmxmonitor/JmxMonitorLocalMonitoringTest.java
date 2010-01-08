@@ -19,17 +19,12 @@ package uk.co.gidley.jmxmonitor;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import uk.co.gidley.jmxmonitor.services.Manager;
+import uk.co.gidley.jmxmonitor.services.ThreadManager;
 
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnectorServer;
-import javax.management.remote.JMXConnectorServerFactory;
-import javax.management.remote.JMXServiceURL;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -74,7 +69,7 @@ public class JmxMonitorLocalMonitoringTest {
 		while (currentTime + 10 * 1000 > (new Date()).getTime()) {
 			ThreadInfo[] threadInfos = thbean.getThreadInfo(thbean.getAllThreadIds());
 			for (ThreadInfo threadInfo : threadInfos) {
-				if (threadInfo.getThreadName().equals(Manager.SHUTDOWN_MONITOR_THREAD)) {
+				if (threadInfo.getThreadName().equals(ThreadManager.SHUTDOWN_MONITOR_THREAD)) {
 					threadFound = true;
 					break;
 				}

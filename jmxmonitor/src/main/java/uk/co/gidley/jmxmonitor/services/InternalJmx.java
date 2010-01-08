@@ -51,14 +51,17 @@ public class InternalJmx implements RegistryShutdownListener {
 	private final String PROPERTY_PREFIX;
 	private JMXConnectorServer jmxConnectorServer;
 	private Registry registry;
-	private final ObjectName connectorServerName;
+
+	public final ObjectName connectorServerName;
+
 	private final MBeanServer MBEAN_SERVER;
+
 	private static final String LOCAL_RMI_PORT = "localRmiPort";
 
 	public InternalJmx(MainConfiguration configuration,
 			RegistryShutdownHub registryShutdownHub) throws InitialisationException, MalformedObjectNameException {
 		//TODO make this a symbol
-		this.PROPERTY_PREFIX = Manager.PROPERTY_PREFIX;
+		this.PROPERTY_PREFIX = ThreadManager.PROPERTY_PREFIX;
 		registryShutdownHub.addRegistryShutdownListener(this);
 		connectorServerName = ObjectName
 				.getInstance("connectors:protocol=rmi");
@@ -139,10 +142,15 @@ public class InternalJmx implements RegistryShutdownListener {
 		try {
 			MBEAN_SERVER.unregisterMBean(connectorServerName);
 		} catch (InstanceNotFoundException e) {
-			logger.error("{}", e);
+			logger.warn("{}", e);
 		} catch (MBeanRegistrationException e) {
-			logger.error("{}", e);
+			logger.warn("{}", e);
 		}
 
 	}
+
+	public ObjectName getConnectorServerName() {
+		return connectorServerName;
+	}
+
 }
