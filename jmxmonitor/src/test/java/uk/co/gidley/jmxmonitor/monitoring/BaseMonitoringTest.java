@@ -67,15 +67,19 @@ public class BaseMonitoringTest {
 		LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
 		BasicConfigurator.configure(lc);
 		TestAppender.reset();
-
-		ThreadManager threadManager = registryManager.getRegistry().getService(ThreadManager.class);
-		threadManager.stop();
+		try {
+			ThreadManager threadManager = registryManager.getRegistry().getService(ThreadManager.class);
+			threadManager.stop();
+		} catch (IllegalStateException e) {
+		 	//noop
+		}
 
 	}
 
 
 	@Test
-	public void testLogbackRedirectionWorks() throws InitialisationException {
+	public void testLogbackRedirectionWorks
+			() throws InitialisationException {
 		int size = TestAppender.getEvents().size();
 
 		logger.info("Did you get this?");

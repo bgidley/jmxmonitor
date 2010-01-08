@@ -186,8 +186,10 @@ public class ThreadManager {
 		ShutdownRunner(Configuration config) throws IOException {
 			int stopPort = config.getInt("jmxmonitor.stopport");
 			stopKey = config.getString("jmxmonitor.stopkey");
+			logger.debug("Initialising ShutdownRunner in {}", stopPort);
 			serverSocketChannel = ServerSocketChannel.open();
 			serverSocketChannel.socket().bind(new InetSocketAddress("127.0.0.1", stopPort));
+			logger.debug("Initialised ShutdownRunner in {}", stopPort);
 		}
 
 		@Override

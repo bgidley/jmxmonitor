@@ -103,7 +103,7 @@ public class JmxMonitorTest {
 		assertThat(output, containsString("ConfigurationFile is src/test/resources/noopConfiguration.properties"));
 
 
-		Socket socket = new Socket("localhost", 8001);
+		Socket socket = new Socket("localhost", 18001);
 		PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
 		printWriter.write("stop");
 		printWriter.flush();
