@@ -71,6 +71,8 @@
                 <configuration>
                     <generateHistorical>true</generateHistorical>
                     <historyDir>${user.home}/history/${project.artifact}</historyDir>
+                    <licenseLocation>clover.license</licenseLocation>
+                    <contextFilters>try,static</contextFilters>
                 </configuration>
                 <executions>
                     <execution>
@@ -221,6 +223,7 @@
                 <configuration>
                     <generateHistorical>true</generateHistorical>
                     <historyDir>${user.home}/history/${project.artifact}</historyDir>
+                    <licenseLocation>clover.license</licenseLocation>
                 </configuration>
             </plugin>
         </plugins>
