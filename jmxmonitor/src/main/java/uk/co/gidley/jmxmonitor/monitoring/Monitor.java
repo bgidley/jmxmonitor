@@ -30,9 +30,6 @@ import javax.management.ObjectName;
  */
 public interface Monitor {
 
-	public void initialise(String name, ObjectName objectName, String attributeName,
-			MBeanServerConnection jmxConnection);
-
 	/**
 	 * The name of the monitor This is defined in the scope of the monitor group
 	 * @return

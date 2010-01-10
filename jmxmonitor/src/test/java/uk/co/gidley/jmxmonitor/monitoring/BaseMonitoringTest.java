@@ -23,31 +23,36 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.util.StatusPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import uk.co.gidley.jmxmonitor.RegistryManager;
 import uk.co.gidley.jmxmonitor.services.InitialisationException;
 import uk.co.gidley.jmxmonitor.services.ThreadManager;
 import uk.co.gidley.jmxmonitor.uk.co.gidley.testAppender.TestAppender;
 
-import static org.hamcrest.Matchers.equalTo;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * Created by IntelliJ IDEA. User: ben Date: Jan 7, 2010 Time: 4:18:00 PM
  */
-public class BaseMonitoringTest {
+public abstract class BaseMonitoringTest {
 	private static final Logger logger = LoggerFactory.getLogger(BaseMonitoringTest.class);
 	private RegistryManager registryManager;
+	private Thread jmxMonitorThread;
 
-	@BeforeTest
-	public void setup() throws InitialisationException, JoranException, InterruptedException {
-		registryManager = new RegistryManager("src/test/resources/monitoring/simpleMBeanConfiguration.properties");
+	@BeforeMethod
+	public void setup() throws InitialisationException, JoranException, InterruptedException, MalformedObjectNameException, MBeanRegistrationException, InstanceAlreadyExistsException, NotCompliantMBeanException {
+		registryManager = new RegistryManager(getConfiguration());
 
-		Thread thread = new Thread(new JmxRunner(), "JmxRunner");
+		registerTestMBeans();
+		jmxMonitorThread = new Thread(new JmxRunner(), "JmxRunner");
 		// Give the registry a chance to start
-		thread.start();
+		jmxMonitorThread.start();
 		while (!registryManager.isReadyToRun()) {
 			Thread.sleep(100);
 		}
@@ -59,10 +64,20 @@ public class BaseMonitoringTest {
 		configurator.doConfigure("src/test/resources/logback-inMemory.xml");
 		StatusPrinter.printInCaseOfErrorsOrWarnings(lc);
 
-
+		// Wait for at least 3 events to be logged
+		// THIS NUMBER SHOULD BE INCREMENTED FOR NUMBER OF OUTPUTS EXPECTED FOR THE SELECTED CONFIG
+		while (TestAppender.getEvents().size() < waitForEvents()) {
+			Thread.sleep(100);
+		}
 	}
 
-	@AfterTest
+	public abstract String getConfiguration();
+
+	public abstract int waitForEvents();
+
+	public abstract void registerTestMBeans() throws MalformedObjectNameException, MBeanRegistrationException, InstanceAlreadyExistsException, NotCompliantMBeanException;
+
+	@AfterMethod
 	public void tearDown() {
 		LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
 		BasicConfigurator.configure(lc);
@@ -71,25 +86,18 @@ public class BaseMonitoringTest {
 			ThreadManager threadManager = registryManager.getRegistry().getService(ThreadManager.class);
 			threadManager.stop();
 		} catch (IllegalStateException e) {
-		 	//noop
+			//noop
 		}
-
-	}
-
-
-	@Test
-	public void testLogbackRedirectionWorks
-			() throws InitialisationException {
-		int size = TestAppender.getEvents().size();
-
-		logger.info("Did you get this?");
-
-		assertThat(TestAppender.getEvents().size(), equalTo(size + 1));
-
+		try {
+			// Wait for jmxmonitor to stop
+			jmxMonitorThread.join();
+		} catch (InterruptedException e) {
+			logger.error("{}", e);
+			throw new RuntimeException(e);
+		}
 	}
 
 	private class JmxRunner implements Runnable {
-
 		@Override
 		public void run() {
 			try {

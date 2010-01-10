@@ -37,8 +37,7 @@ public class SimpleJmxMonitor implements Monitor {
 	private String attributeName;
 
 
-	@Override
-	public void initialise(String name, ObjectName objectName, String attributeName, MBeanServerConnection jmxConnection) {
+	public SimpleJmxMonitor(String name, ObjectName objectName, String attributeName, MBeanServerConnection jmxConnection) {
 		this.name = name;
 		this.mbeanServerConnection = jmxConnection;
 		this.objectName = objectName;

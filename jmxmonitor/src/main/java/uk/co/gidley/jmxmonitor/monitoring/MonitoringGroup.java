@@ -160,9 +160,10 @@ public class MonitoringGroup implements Runnable {
 			while (monitorKeys.hasNext()) {
 				String key = monitorKeys.next();
 				if (!key.endsWith(URL)) {
-					String monitorName = key.substring(ThreadManager.PROPERTY_PREFIX.length() + monitorUrlKey.length() + 1,
+					String monitorName = key.substring(
+							ThreadManager.PROPERTY_PREFIX.length() + monitorUrlKey.length() + 1,
 							key.lastIndexOf("."));
-					// Only load each on once (there will be 2 keys)
+					// Only load each on once (there will be n keys)
 					if (!loadedMonitors.contains(monitorName)) {
 						constructMonitor(monitorUrlKey, monitorsConfiguration, monitorUrlHolder, monitorName);
 						loadedMonitors.add(monitorName);
@@ -179,15 +180,22 @@ public class MonitoringGroup implements Runnable {
 
 	private void constructMonitor(String monitorUrlKey, CompositeConfiguration monitorsConfiguration,
 			MonitorUrlHolder monitorUrlHolder, String monitorName) throws MalformedObjectNameException {
-		Monitor monitor = new SimpleJmxMonitor();
+
 		// Value of key is java.lang:type=Memory/HeapMemoryUsage!Heap
 		String keyPrefix = ThreadManager.PROPERTY_PREFIX + monitorUrlKey + "." + monitorName;
 		String objectName = monitorsConfiguration.getString(
 				keyPrefix + ".objectName");
 		String attribute = monitorsConfiguration.getString(
 				keyPrefix + ".attribute");
-		monitor.initialise(monitorName, new ObjectName(objectName), attribute,
-				monitorUrlHolder.getmBeanServerConnection());
+		String discriminator = monitorsConfiguration.getString(keyPrefix + ".discriminator", null);
+		Monitor monitor;
+		if (discriminator == null) {
+			monitor = new SimpleJmxMonitor(monitorName, new ObjectName(objectName), attribute,
+					monitorUrlHolder.getmBeanServerConnection());
+		} else {
+			monitor = new DiscriminatingJmxMonitor(monitorName,
+					new ObjectName(objectName), attribute, discriminator, monitorUrlHolder.getmBeanServerConnection());
+		}
 		monitorUrlHolder.getMonitors().add(monitor);
 	}
 

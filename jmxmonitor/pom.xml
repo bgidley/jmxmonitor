@@ -16,7 +16,7 @@
     <scm>
         <connection>scm:svn:https://jmxmonitor.svn.sourceforge.net/svnroot/jmxmonitor/</connection>
         <developerConnection>scm:svn:https://jmxmonitor.svn.sourceforge.net/svnroot/jmxmonitor/</developerConnection>
-        <url>https://sourceforge.net/apps/trac/jmxmonitor/browser</url>
+        <url>http://fisheye1.atlassian.com/browse/jmxmonitor</url>
     </scm>
 
     <distributionManagement>
