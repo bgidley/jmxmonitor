@@ -12,5 +12,20 @@
 
   * These are outputted to rolling log files for external tools (e.g. Nagios or Cacti) to process.
 
+Installation
 
+ The programme is distributed as a archive (tar.gz) to install
 
+ * tar -xjf DISTRIBUTION.tar.gz
+
+ This will give you a folder laid out as follows
+
++--
+
+  /
+  /bin
+  /bin/jmxmonitor.sh
+  /lib/jmxmonitor-VERSION.jar
+  /conf
+
++--
