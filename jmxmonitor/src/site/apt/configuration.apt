@@ -16,8 +16,128 @@ Configuration
 
 * Jmx Monitor Global Configuration
 
+ A sample file is below
+
++--
+jmxmonitor.groups=group1
+
+# Stop port and key - telnet to this port and send key to stop it
+jmxmonitor.stopport=18001
+jmxmonitor.stopkey=stop
+
+jmxmonitor.localJmx=service:jmx:rmi://127.0.0.1:18002/jndi/rmi://127.0.0.1:18003/jmxrmi/
+jmxmonitor.localRmiPort=18003
+
+# Group 1 Configuration
+# Poll interval in milliseconds
+jmxmonitor.group1.interval=5000
+# Path to monitor configuration
+jmxmonitor.group1.monitorConfiguration=src/test/resources/jmxLocalMonitoringTestMonitor.properties
+# Path to expressions
+jmxmonitor.group1.expressionConfiguration=src/test/resources/jmxLocalMonitoringTestExpression.properties
+
++--
+
+ The key settings are
+
+ * jmxmonitor.groups = A list of the group configuration files to load. Each group will have
+
+ ** jmxmonitor.GROUP_NAME.interval - A polling interval in milliseconds to gather stats. This is the time BETWEEN polls.
+ The time taken gathering stats is ignores. (e.g. if you set this to 5 seconds, and it takes 2 seconds to gather stats
+ you will get output every 7 seconds).
+
+ ** jmxmonitor.GROUP_NAME.monitorConfiguration - Path to group level monitor configuration file
+
+ ** jmxmonitor.GROUP_NAME.expressionConfiguration - Path to group level expression configuration file
+
+ ** jmxmonitor.stopport - A tcp port jmxmonitor will listen on for a stop instruction. This is to make
+ it easier to run as a service.
+
+ ** jmxmonitor.stopkey - A string that will cause jmxmonitor to stop when sent to the stop port.
+
+ ** jmxmonitor.localJmx - A jmx URL that JMX monitor will expose the local JMX connector on. This can be used to get
+ one jmxmonitor to monitor another, itself or for testing. If ommited it won't start localjmx.
+
+ ** jmxmonitor.localRmiPort - the port RMI should start on for local JMX. This MUST match the port used in the jmx URL
+
 * Group Level Monitor Configuration
+
+ The monitor configuration file defines the *data* being gathered from the monitoring targets. Each file
+ can monitor N urls. For each URL it will gather N attributes containing data. The attributes being gathered can
+ be simple data types OR java objects. This will depend on whoever wrote the JMX MBean you are monitoring.
+
+ The way you find out about these attributes is to connect JConsole (or similar) to the JVM and browse them.
+
++--
+jmxmonitor.connections=url1
+
+jmxmonitor.url1.url=service:jmx:rmi://127.0.0.1:18002/jndi/rmi://127.0.0.1:18003/jmxrmi/
+jmxmonitor.url1.heap.objectName=java.lang:type=Memory
+jmxmonitor.url1.heap.attribute=HeapMemoryUsage
+
+jmxmonitor.url1.ping.objectName=uk.co.gidley.jmxmonitor:type=Bean1[*]
+jmxmonitor.url1.ping.discriminator=Discriminator
+jmxmonitor.url1.ping.attribute=Ping
++--
+ * jmxmonitor.connections - defines the list of URL names to look for in the rest of this file
+
+ ** jmxmonitor.URL_NAME.url - defines the JMX URL to connect to
+
+ ** jmxmonitor.URL_NAME.ATTRIBUTE_NAME.objectName - Sets the object name to link to this attribute. The object
+ name is the name of the containing MBean in JConsole. You can copy/paste this from Jconsole.
+ These CAN contain wild cards, if this matches more that one bean the discriminator MUST be supplied.
+
+ ** jmxmonitor.URL_NAME.ATTRIBUTE_NAME.attribute - The attribute to monitor
+
+ ** jmxmonitor.URL_NAME.ATTRIBUTE_NAME.discriminator - An attribute on the object to discriminate the results.
+ This is for beans that have similar or unpredictable names. A good example is C3P0 which creates beans whose
+ object name consists of a standard string and the object ID. In that case you could have more than
+ one bean matches the wildcard objectName. This field can be used to 'discriminate' between them in the results.
+  In the C3PO example you could use username (for the database). Then if you had two connection pools using different
+  usernames you could monitor them separately.
 
 * Group Level Expression Configuration
 
+    JMX Monitor gathers all the objects in the monitors file and then exposes them to a scripting
+    enviroment to output results.
+
+    The scripting language is *Javascript* (as implemented by the JVM). The scripts are stored in a configuration
+    file.
+
++--
+jmxmonitor.heap="Heap Used " + heap.get("used")
+jmxmonitor.ping1="Ping 1 " + ping.get("1")
+jmxmonitor.ping2="Ping 2 " + ping.get("2")
++--
+
+    * jmxmonitor.SCRIPT - Each script is a string on a line of the properties file and can refer to the
+    attributes object by name. e.g. heap and ping above.
+
+    In the case of discriminated objects (see above) the object exposed will be a map keyed by the discriminator.
+
+
 * Logback Configuration
+
+    The output of JMX Monitor is routed via logback. Logback is a logging library that supports a range
+    of output formats (including file, db, console, SNMP, mail, JMS).
+
+    There are essentially 2 sets of logs
+
+    * JMXMonitor itself
+
+    * Expression Output
+
+    All the logs are configured by a logback.xml file. If using the service the default is in /opt/etc/logback.xml.
+    If using the commandline a default is shipped in the jar, but you should override by passing
+    -Dlogback.configurationFile=/path/to/config.xml
+
+    The logback manual is comprehensive {{{http://logback.qos.ch/manual/}}}
+
+** JMX Monitor
+
+   JMX Monitor output to the logger 'uk.co.gidley.jmxmonitor'. It is recommended logging on INFO level somewhere to diagnose issues.
+
+** Expression Output
+
+   Expressions are output to 'monitoringgroup.GROUP_NAME'. If is recommended to write these with
+   rolling file appenders.

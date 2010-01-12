@@ -24,8 +24,39 @@ Installation
 
   /
   /bin
-  /bin/jmxmonitor.sh
-  /lib/jmxmonitor-VERSION.jar
-  /conf
+  /bin/jmxmonitor
+  /bin/jmxmonitor-svc
+  /lib/jmxmonitor-VERSION-jar-with-dependencies.jar
+  /etc
 
 +--
+
+ In bin there are some unix scripts to get you started
+
+ * jmxmonitor - runs it on the commandline
+
+ * jmxmonitor-svc - run it in the background
+
+ * jmxmonitor.xml is a Sun SMF manifest for it.
+
+Running
+
+ On the command line run
+
+ jmxmonitor -c CONFIGURATION_FILE
+
+
+Configuration
+
+ The default configuration location (for the service) is /opt/etc/jmxmonitor/. In this directory
+ you should have
+
+ * config
+
+ * monitors
+
+ * expressions
+
+ * logback.xml
+
+ See {{{configuration.html}}} for more details

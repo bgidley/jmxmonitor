@@ -108,7 +108,7 @@
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
                     <execution>
-                        <phase>pre-integration-test</phase>
+                        <phase>verify</phase>
                         <configuration>
                             <tasks>
                                 <ant antfile="${basedir}/build.xml">
