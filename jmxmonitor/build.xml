@@ -21,12 +21,22 @@
 
     <property name="output" value="${target}/distro"/>
 
-    <target name="package">
+
+    <target name="checkClover">
+        <condition property="isCloverLifecycle">
+            <contains string="${target}" substring="clover"/>
+        </condition>
+    </target>
+
+    <target name="copy" unless="isCloverLifecycle" depends="checkClover">
         <delete dir="${output}" quiet="true"/>
         <mkdir dir="${output}"/>
         <mkdir dir="${output}/bin"/>
         <mkdir dir="${output}/lib"/>
+        <copy file="${target}/jmxmonitor-${version}-jar-with-dependencies.jar" todir="${output}/lib"/>
+    </target>
 
-        <copy file="${target}/jmxmonitor-${version}-jar-with-dependencies.jar" todir="${output}/lib"/> 
+    <target name="package" depends="copy">
+        <echo message="${isCloverLifecycle}"/>
     </target>
 </project>
