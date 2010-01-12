@@ -267,6 +267,7 @@
                     <historyDir>${user.home}/history/${project.artifact}</historyDir>
                     <licenseLocation>clover.license</licenseLocation>
                 </configuration>
+                <version>2.6.3</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

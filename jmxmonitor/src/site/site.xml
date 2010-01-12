@@ -23,7 +23,7 @@
         <menu name="JMX Monitor">
             <item name="Introduction" href="index.html"/>
             <item name="Download" href="https://sourceforge.net/projects/jmxmonitor/files/"/>
-            <item name="Sample Configurations" href="sample.html"/>
+            <item name="Configurations" href="configuration.html"/>
             <item name="Useful JMX Attributes" href="jmx.html"/>
         </menu>
 
