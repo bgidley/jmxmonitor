@@ -12,7 +12,7 @@
 
   * These are outputted to rolling log files for external tools (e.g. Nagios or Cacti) to process.
 
-* Installation
+Installation
 
  The programme is distributed as a archive (tar.gz) to install
 
@@ -39,14 +39,14 @@
 
  * jmxmonitor.xml is a Sun SMF manifest for it.
 
-* Running
+Running
 
  On the command line run
 
  jmxmonitor -c CONFIGURATION_FILE
 
 
-* Configuration
+Configuration
 
  The default configuration location (for the service) is /opt/etc/jmxmonitor/. In this directory
  you should have
@@ -62,6 +62,6 @@
  See {{{configuration.html}Configuration page}} for more details
 
 
-* Ideas for what to monitor
+Ideas for what to monitor
 
  The {{{jmx.html}JMX}} page provides some pointers of the kind of thing you can monitor.

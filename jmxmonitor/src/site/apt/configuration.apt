@@ -137,11 +137,11 @@ jmxmonitor.ping2="Ping 2 " + ping.get("2")
 
     The logback manual is comprehensive {{{http://logback.qos.ch/manual/}}}
 
-** JMX Monitor
+* JMX Monitor
 
    JMX Monitor output to the logger 'uk.co.gidley.jmxmonitor'. It is recommended logging on INFO level somewhere to diagnose issues.
 
-** Expression Output
+* Expression Output
 
    Expressions are output to 'monitoringgroup.GROUP_NAME'. If is recommended to write these with
    rolling file appenders.
