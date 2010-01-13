@@ -121,7 +121,7 @@ jmxmonitor.ping2="Ping 2 " + ping.get("2")
 * Global {Logback} Configuration
 
     The output of JMX Monitor is routed via logback. Logback is a logging library that supports a range
-    of output formats (including file, db, console, SNMP, mail, JMS).
+    of output formats (including file, db, console, mail, JMS).
 
     There are essentially 2 sets of logs
 

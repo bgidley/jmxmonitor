@@ -34,7 +34,10 @@
         <mkdir dir="${output}/bin"/>
         <mkdir dir="${output}/lib"/>
         <mkdir dir="${output}/etc"/>
+        <mkdir dir="${output}/logs"/>
         <copy file="${target}/jmxmonitor-${version}-jar-with-dependencies.jar" todir="${output}/lib"/>
+
+        <copy file="LICENSE.txt" todir="${output}"/>
 
         <copy todir="${output}/bin">
             <fileset dir="src/main/bin"/>
@@ -50,7 +53,7 @@
         </chmod>
     </target>
 
-    <target name="package" depends="copy">
-       
+    <target name="package" depends="copy" unless="isCloverLifeCycle">
+         <tar destfile="${target}/jmxmonitor-${version}.tar.bz2" compression="bzip2" basedir="${output}"/>
     </target>
 </project>
