@@ -43,11 +43,13 @@ import java.util.NoSuchElementException;
 public class ThreadManager {
 	private static final Logger logger = LoggerFactory.getLogger(ThreadManager.class);
 	public static final String SHUTDOWN_MONITOR_THREAD = "ShutdownMonitor";
-	private Boolean running = true;
+	private Boolean threadManagerRunning = true;
 	private Map<String, MonitoringGroupHolder> monitoringGroups = new HashMap<String, MonitoringGroupHolder>();
 	private ThreadGroup threadGroup = new ThreadGroup("MonitoringGroups");
 	public static final String PROPERTY_PREFIX = "jmxmonitor.";
 	private MainConfiguration mainConfiguration;
+	public static final String JMXMONITOR_STOPPORT = "jmxmonitor.stopport";
+	public static final String JMXMONITOR_STOPKEY = "jmxmonitor.stopkey";
 
 	public ThreadManager(MainConfiguration mainConfiguration) {
 		this.mainConfiguration = mainConfiguration;
@@ -57,7 +59,7 @@ public class ThreadManager {
 	 * Stop this asap (NOT sync)
 	 */
 	public void stop() {
-		this.running = false;
+		this.threadManagerRunning = false;
 	}
 
 
@@ -97,7 +99,7 @@ public class ThreadManager {
 			}
 
 			// Continue to monitor for failures or stop message. On failure stop group, restart it if possible
-			while (running) {
+			while (threadManagerRunning) {
 				for (String groupName : monitoringGroups.keySet()) {
 					MonitoringGroup monitoringGroup = monitoringGroups.get(groupName).getMonitoringGroup();
 					if (!monitoringGroup.isAlive()) {
@@ -107,7 +109,17 @@ public class ThreadManager {
 
 				// Stop if the shutdown thread has triggered. 
 				if (!shutdownThread.isAlive()) {
-					running = false;
+					threadManagerRunning = false;
+					for (String groupName : monitoringGroups.keySet()) {
+						logger.debug("Stopping {}", groupName);
+						MonitoringGroup monitoringGroup = monitoringGroups.get(groupName).getMonitoringGroup();
+						monitoringGroup.stop();
+					}
+					for (String groupName : monitoringGroups.keySet()) {
+						Thread monitoringGroup = monitoringGroups.get(groupName).getThread();
+						monitoringGroup.join();
+						logger.debug("Stopped {}", groupName);
+					}
 				}
 
 				Thread.sleep(5000);
@@ -184,8 +196,8 @@ public class ThreadManager {
 
 
 		ShutdownRunner(Configuration config) throws IOException {
-			int stopPort = config.getInt("jmxmonitor.stopport");
-			stopKey = config.getString("jmxmonitor.stopkey");
+			int stopPort = config.getInt(JMXMONITOR_STOPPORT);
+			stopKey = config.getString(JMXMONITOR_STOPKEY);
 			logger.debug("Initialising ShutdownRunner in {}", stopPort);
 			serverSocketChannel = ServerSocketChannel.open();
 			serverSocketChannel.socket().bind(new InetSocketAddress("127.0.0.1", stopPort));
@@ -197,16 +209,17 @@ public class ThreadManager {
 			logger.info("Stop listener thread working");
 
 			try {
-
-				while (running) {
+				boolean shutdownRunning = true;
+				while (shutdownRunning) {
 					SocketChannel socketChannel = serverSocketChannel.accept();
 					dbuf.clear();
 					socketChannel.read(dbuf);
 					dbuf.flip();
 					CharBuffer cb = decoder.decode(dbuf);
 					if (cb.toString().equals(stopKey)) {
-						running = false;
 						serverSocketChannel.close();
+						shutdownRunning = false;
+						logger.info("Recieved Stop command");
 					}
 				}
 			} catch (ClosedByInterruptException e) {

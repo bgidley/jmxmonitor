@@ -101,7 +101,7 @@ public abstract class BaseMonitoringTest {
 		@Override
 		public void run() {
 			try {
-				registryManager.invoke();
+				registryManager.start();
 			} catch (InitialisationException e) {
 				logger.error("{}", e);
 				throw new RuntimeException(e);

@@ -17,6 +17,7 @@
 package uk.co.gidley.jmxmonitor;
 
 import org.apache.commons.configuration.CompositeConfiguration;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.tapestry5.ioc.IOCUtilities;
@@ -28,6 +29,11 @@ import uk.co.gidley.jmxmonitor.services.InitialisationException;
 import uk.co.gidley.jmxmonitor.services.JmxMonitorModule;
 import uk.co.gidley.jmxmonitor.services.MainConfiguration;
 import uk.co.gidley.jmxmonitor.services.ThreadManager;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.net.UnknownHostException;
 
 /**
  * Start the registry and pass control to the manager service.
@@ -55,7 +61,7 @@ public class RegistryManager {
 		this.configurationFile = configurationFile;
 	}
 
-	public void invoke() throws InitialisationException {
+	public void start() throws InitialisationException {
 		RegistryBuilder registryBuilder = new RegistryBuilder();
 		IOCUtilities.addDefaultModules(registryBuilder);
 		registryBuilder.add(JmxMonitorModule.class);
@@ -72,9 +78,27 @@ public class RegistryManager {
 		}
 	}
 
+	public void stop() throws InitialisationException, IOException {
+		Configuration config = readConfiguration(configurationFile);
+		String stopKey = config.getString(ThreadManager.JMXMONITOR_STOPKEY);
+	    int stopPort = config.getInt(ThreadManager.JMXMONITOR_STOPPORT);
+
+		Socket socket = new Socket("localhost", stopPort);
+		PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
+		printWriter.write(stopKey);
+		printWriter.flush();
+
+
+	}
+
 	private static void parseMainConfiguration(String configurationFile,
 			Registry registry) throws InitialisationException {
 		MainConfiguration mainConfiguration = registry.getService(MainConfiguration.class);
+		CompositeConfiguration config = readConfiguration(configurationFile);
+		mainConfiguration.setConfiguration(config);
+	}
+
+	private static CompositeConfiguration readConfiguration(String configurationFile) throws InitialisationException {
 		// Read configuration file
 		CompositeConfiguration config = new CompositeConfiguration();
 		config.setThrowExceptionOnMissing(true);
@@ -84,6 +108,6 @@ public class RegistryManager {
 			logger.error("{}", e);
 			throw new InitialisationException(e);
 		}
-		mainConfiguration.setConfiguration(config);
+		return config;
 	}
 }

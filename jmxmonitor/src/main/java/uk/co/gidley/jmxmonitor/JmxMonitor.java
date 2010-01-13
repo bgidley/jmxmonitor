@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import uk.co.gidley.jmxmonitor.services.InitialisationException;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA. User: ben Date: Dec 22, 2009 Time: 7:24:30 PM
@@ -35,6 +36,7 @@ import java.io.File;
 public class JmxMonitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(JmxMonitor.class);
+	private static final String STOP = "stop";
 
 	public static void main(String[] args) {
 		System.out.println("Starting JMX Monitor");
@@ -44,6 +46,8 @@ public class JmxMonitor {
 		configurationFileOption.setRequired(true);
 		configurationFileOption.setArgs(1);
 		options.addOption(configurationFileOption);
+		Option stopOption = new Option(STOP, false, "Pass to " + STOP + " the process");
+		options.addOption(stopOption);
 
 		CommandLineParser parser = new PosixParser();
 		try {
@@ -52,7 +56,13 @@ public class JmxMonitor {
 			System.out.println("ConfigurationFile is " + configurationFile);
 			File file = new File(configurationFile);
 			if (file.exists() && file.canRead()) {
-				new RegistryManager(configurationFile).invoke();
+				if (cmd.hasOption(STOP)) {
+					logger.debug("Stopping existing JMXMonitor");
+					new RegistryManager(configurationFile).stop();
+				} else {
+					logger.debug("Starting new JMXMonitor");
+					new RegistryManager(configurationFile).start();
+				}
 			} else {
 				logger.error("Unable to read configuration exiting {}", file);
 			}
@@ -63,6 +73,9 @@ public class JmxMonitor {
 			HelpFormatter formatter = new HelpFormatter();
 			formatter.printHelp("jmxMonitor", options);
 		} catch (InitialisationException e) {
+			logger.error("{}", e);
+			throw new RuntimeException(e);
+		} catch (IOException e) {
 			logger.error("{}", e);
 			throw new RuntimeException(e);
 		}
