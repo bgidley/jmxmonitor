@@ -24,12 +24,12 @@
         <exec_method
                 type='method'
                 name='start'
-                exec='TODO'
+                exec='jmxmonitor-svn %m'
                 timeout_seconds='2'/>
         <exec_method
                 type='method'
                 name='stop'
-                exec='TODO'
+                exec='jmxmonitor-svn %m'
                 timeout_seconds='2'/>
     </service>
 </service_bundle>
