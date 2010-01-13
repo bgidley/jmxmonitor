@@ -2,20 +2,20 @@ Configuration
 
  The configuration is grouped into sections
 
- * {{Jmx Monitor Global Configuration}}
+ * {{{Jmx} Monitor Global Configuration}}
  This defines monitor groups that run periodically. Each group has a set of monitors (to gather data) and expressions (to output it).
 
- ** {{Group Level Monitor Configuration}}
+ ** {{{Monitor}Group Level Monitor Configuration}}
 
- ** {{Group Level Expression Configuration}}
+ ** {{{Expression}Group Level Expression Configuration}}
 
- * {{Global Logback Configuration}}
+ * {{{Logback}Global Logback Configuration}}
  The logback configuration is global, but the channels it outputs to are per group. The system ships with a default
  configuration, where all output is placed in a single file. However you can easily configure it to seperate logging
  into files per monitor group.
 
 
-* {Jmx Monitor Global Configuration}
+* {Jmx} Monitor Global Configuration
 
  A sample file is below
 
@@ -62,7 +62,7 @@ jmxmonitor.group1.expressionConfiguration=src/test/resources/jmxLocalMonitoringT
  ** jmxmonitor.localRmiPort - the port RMI should start on for local JMX. This MUST match the port used in the jmx URL
 
 
-* {Group Level Monitor Configuration}
+* Group Level {Monitor} Configuration
 
  The monitor configuration file defines the *data* being gathered from the monitoring targets. Each file
  can monitor N urls. For each URL it will gather N attributes containing data. The attributes being gathered can
@@ -98,7 +98,7 @@ jmxmonitor.url1.ping.attribute=Ping
   In the C3PO example you could use username (for the database). Then if you had two connection pools using different
   usernames you could monitor them separately.
 
-* {Group Level Expression Configuration}
+* Group Level {Expression} Configuration
 
     JMX Monitor gathers all the objects in the monitors file and then exposes them to a scripting
     enviroment to output results.
@@ -118,7 +118,7 @@ jmxmonitor.ping2="Ping 2 " + ping.get("2")
     In the case of discriminated objects (see above) the object exposed will be a map keyed by the discriminator.
 
 
-* {Global Logback Configuration}
+* Global {Logback} Configuration
 
     The output of JMX Monitor is routed via logback. Logback is a logging library that supports a range
     of output formats (including file, db, console, SNMP, mail, JMS).

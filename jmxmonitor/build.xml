@@ -33,10 +33,24 @@
         <mkdir dir="${output}"/>
         <mkdir dir="${output}/bin"/>
         <mkdir dir="${output}/lib"/>
+        <mkdir dir="${output}/etc"/>
         <copy file="${target}/jmxmonitor-${version}-jar-with-dependencies.jar" todir="${output}/lib"/>
+
+        <copy todir="${output}/bin">
+            <fileset dir="src/main/bin"/>
+        </copy>
+         <copy todir="${output}/etc">
+            <fileset dir="src/main/etc"/>
+        </copy>
+
+        <chmod perm="a+x">
+            <fileset dir="${output}/bin">
+                <exclude name="**/*.xml"/>
+            </fileset>
+        </chmod>
     </target>
 
     <target name="package" depends="copy">
-        <echo message="${isCloverLifecycle}"/>
+       
     </target>
 </project>
