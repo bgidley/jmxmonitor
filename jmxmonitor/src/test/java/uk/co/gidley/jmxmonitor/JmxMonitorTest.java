@@ -112,7 +112,7 @@ public class JmxMonitorTest {
 		currentTime = (new Date()).getTime();
 		boolean stopped = false;
 
-		jmxMonitor.join(5000);
+		jmxMonitor.join(10000);
 		assertThat(jmxMonitor.isAlive(), is(false));
 
 		// Finally verify the socket thread shut down
