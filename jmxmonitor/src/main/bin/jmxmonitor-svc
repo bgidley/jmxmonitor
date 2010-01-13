@@ -14,22 +14,33 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-USER='nobody'
-JMXMONITOR_HOME='/opt/jmxmonitor'
-JMXMONITOR_CONFIG='/opt/etc/jmxmonitor/config'
-STOPPORT=18001
-STOPKEY=stop
+# VARIABLE can be overridden in calling environment
 
-
+if [ -z "$USER" ]; then
+    USER='nobody'
+fi
+if [ -z "$JMXMONITOR_HOME" ]; then
+    JMXMONITOR_HOME='/opt/jmxmonitor'
+fi
+if [ -z "$JMXMONITOR_CONFIG" ]; then
+    JMXMONITOR_CONFIG='/opt/etc/jmxmonitor/config'
+fi
+if [ -z "$STOPPORT" ]; then
+    STOPPORT=18001
+fi
+if [ -z "$STOPKEY" ]; then
+    STOPKEY=stop
+fi
 
 case "$1" in
     'start')
-        sudo su - $USER -c 'nohup $JMXMONITOR_HOME/bin/jmxmonitor -c $JMXMONITOR_CONFIG'
+        su - $USER -c 'nohup $JMXMONITOR_HOME/bin/jmxmonitor -c $JMXMONITOR_CONFIG'
     ;;
 
     'stop')
-        # To stop telnet to localhost and send stop key.
-
+    # To stop telnet to localhost and send stop key.
+        su - $USER -c 'nohup $JMXMONITOR_HOME/bin/jmxmonitor -c $JMXMONITOR_CONFIG -stop'
     ;;
+esac
 
 exit 0
