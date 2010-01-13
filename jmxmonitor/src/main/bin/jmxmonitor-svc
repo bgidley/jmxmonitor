@@ -28,12 +28,12 @@ fi
 
 case "$1" in
     'start')
-        su - $USER -c 'cd $JMXMONITOR_HOME; nohup ./bin/jmxmonitor -c $JMXMONITOR_CONFIG'
+        su - $USER -c "cd $JMXMONITOR_HOME; nohup ./bin/jmxmonitor -c $JMXMONITOR_CONFIG"
     ;;
 
     'stop')
     # To stop telnet to localhost and send stop key.
-        su - $USER -c 'cd $JMXMONITOR_HOME; nohup ./bin/jmxmonitor -c $JMXMONITOR_CONFIG -stop'
+        su - $USER -c "cd $JMXMONITOR_HOME; nohup ./bin/jmxmonitor -c $JMXMONITOR_CONFIG -stop"
     ;;
 esac
 
