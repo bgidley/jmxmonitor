@@ -25,6 +25,7 @@
             <item name="Download" href="https://sourceforge.net/projects/jmxmonitor/files/"/>
             <item name="Configurations" href="configuration.html"/>
             <item name="Useful JMX Attributes" href="jmx.html"/>
+            <item name="Sun SMF" href="sunsmf.html"/>
         </menu>
 
         <menu ref="reports"/>

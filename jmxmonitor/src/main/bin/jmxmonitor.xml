@@ -20,16 +20,66 @@
             name='application/monitoring/jmxmonitor'
             type='service'
             version='1'>
+        <create_default_instance enabled="false"/>
+
         <single_instance/>
+
+        <dependency name='network'
+                    type='service'
+                    grouping='require_all'
+                    restart_on='none'>
+            <service_fmri value='svc:/milestone/network'/>
+        </dependency>
+
+        <dependency name='name-services'
+                    type='service'
+                    grouping='require_all'
+                    restart_on='refresh'>
+            <service_fmri value='svc:/milestone/name-services'/>
+        </dependency>
+
+        <dependency name='filesystem-local'
+                    type='service'
+                    grouping='require_all'
+                    restart_on='none'>
+            <service_fmri value='svc:/system/filesystem/local'/>
+        </dependency>
+
+        <dependency name='remote-filesystems'
+                    type='service'
+                    grouping='optional_all'
+                    restart_on='none'>
+            <service_fmri value='svc:/network/nfs/client'/>
+            <service_fmri value='svc:/system/filesystem/autofs'/>
+        </dependency>
+
+        <dependency name='syslog'
+                    type='service'
+                    grouping='require_all'
+                    restart_on='none'>
+            <service_fmri value='svc:/system/system-log'/>
+        </dependency>
+
         <exec_method
                 type='method'
                 name='start'
-                exec='jmxmonitor-svn %m'
-                timeout_seconds='2'/>
+                exec='/lib/svc/method/jmxmonitor-svc start'
+                timeout_seconds='30'/>
         <exec_method
                 type='method'
                 name='stop'
-                exec='jmxmonitor-svn %m'
-                timeout_seconds='2'/>
+                exec='/lib/svc/method/jmxmonitor-svc stop'
+                timeout_seconds='30'/>
+
+        <template>
+            <common_name>
+                <loctext xml:lang='C'>
+                    Java JMX Montior
+                </loctext>
+            </common_name>
+            <documentation>
+                <doc_link name="JmxMonitor" uri="http://jmxmonitor.sourceforge.net"></doc_link>
+            </documentation>
+        </template>
     </service>
 </service_bundle>

@@ -1,0 +1,39 @@
+Sun SMF
+
+ Sun SMF is their alternative to rc.d/inet.d and provides a mechanism for starting a service.
+
+ JMX Monitor supports SMF by providing
+
+ * An SMF Manfest
+
+ * An serivce start/stop script (this file can also be used with inet.d!)
+
+ To use as a Sun SMF service
+
+ * Extract the distribution into /opt/jmxmonitor
+
+ * chown -R nobody /opt/jmxmonitor
+
+ * cp /opt/jmxmonitor/bin/jmxmonitor-svc /lib/svc/method
+
+ * chmod a+x /opt/jmxmonitor/bin/jmxmonitor-svc
+
+ * chmod a+x /opt/jmxmonitor/bin/jmxmonitor
+
+ * svccfg validate /opt/jmxmonitor/bin/jmxmonitor.xml
+
+ * svccfg install /opt/jmxmonitor/bin/jmxmonitor.xml
+
+ It is now installed and will autostart on boot. To start run
+
+ * svcadmin enable jmxmonitor
+
+ To stop run
+
+ * svcadmin disable jmxmonitor
+
+ Logs will be written into /opt/jmxmonitor/logs by default and the SMF framework will log into the syslog.
+
+ You can get its status by running
+
+ * svcs -l jmxmonitor

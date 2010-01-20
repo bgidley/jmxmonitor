@@ -37,7 +37,7 @@ Installation
 
  * jmxmonitor-svc - run it in the background
 
- * jmxmonitor.xml is a Sun SMF manifest for it.
+ * jmxmonitor.xml is a Sun SMF manifest for it.  See {{{sunjmx.html} Sun JMX}} page for details.
 
 Running
 

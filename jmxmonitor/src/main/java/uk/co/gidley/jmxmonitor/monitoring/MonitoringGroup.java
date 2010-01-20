@@ -246,14 +246,15 @@ public class MonitoringGroup implements Runnable {
 									logger.error("{}", e);
 								}
 							}
-							ScriptEngine jsEngine = scriptEngineManager.getEngineByName(
+							ScriptEngine scriptEngine = scriptEngineManager.getEngineByName(
 									"JavaScript");
 							for (String key : results.keySet()) {
-								jsEngine.put(key, results.get(key));
+								scriptEngine.put(key, results.get(key));
 							}
+
 							for (String expression : expressions) {
 								try {
-									Object output = jsEngine.eval(expression);
+									Object output = scriptEngine.eval(expression);
 									outputLogger.info("{}", output);
 								} catch (ScriptException e) {
 									logger.warn("Script Error {}", e);
