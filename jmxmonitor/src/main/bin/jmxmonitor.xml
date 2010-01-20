@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
+<!--
+  ~ Copyright 2010 Ben Gidley
+  ~
+  ~    Licensed under the Apache License, Version 2.0 (the "License");
+  ~    you may not use this file except in compliance with the License.
+  ~    You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~    Unless required by applicable law or agreed to in writing, software
+  ~    distributed under the License is distributed on an "AS IS" BASIS,
+  ~    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~    See the License for the specific language governing permissions and
+  ~    limitations under the License.
+  -->
+<service_bundle type='manifest' name='jmxmonitor'>
+    <service
+            name='application/monitoring/jmxmonitor'
+            type='service'
+            version='1'>
+        <create_default_instance enabled="false"/>
+
+        <single_instance/>
+
+        <dependency name='network'
+                    type='service'
+                    grouping='require_all'
+                    restart_on='none'>
+            <service_fmri value='svc:/milestone/network'/>
+        </dependency>
+
+        <dependency name='name-services'
+                    type='service'
+                    grouping='require_all'
+                    restart_on='refresh'>
+            <service_fmri value='svc:/milestone/name-services'/>
+        </dependency>
+
+        <dependency name='filesystem-local'
+                    type='service'
+                    grouping='require_all'
+                    restart_on='none'>
+            <service_fmri value='svc:/system/filesystem/local'/>
+        </dependency>
+
+        <dependency name='remote-filesystems'
+                    type='service'
+                    grouping='optional_all'
+                    restart_on='none'>
+            <service_fmri value='svc:/network/nfs/client'/>
+            <service_fmri value='svc:/system/filesystem/autofs'/>
+        </dependency>
+
+        <dependency name='syslog'
+                    type='service'
+                    grouping='require_all'
+                    restart_on='none'>
+            <service_fmri value='svc:/system/system-log'/>
+        </dependency>
+
+        <exec_method
+                type='method'
+                name='start'
+                exec='/lib/svc/method/jmxmonitor-svc start'
+                timeout_seconds='30'/>
+        <exec_method
+                type='method'
+                name='stop'
+                exec='/lib/svc/method/jmxmonitor-svc stop'
+                timeout_seconds='30'/>
+
+        <template>
+            <common_name>
+                <loctext xml:lang='C'>
+                    Java JMX Montior
+                </loctext>
+            </common_name>
+            <documentation>
+                <doc_link name="JmxMonitor" uri="http://jmxmonitor.sourceforge.net"></doc_link>
+            </documentation>
+        </template>
+    </service>
+</service_bundle>

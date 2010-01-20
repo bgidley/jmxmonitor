@@ -1,0 +1,67 @@
+  The JMX Monitor Project provides a daemon (or commandline) tool to monitor a series of JMX services.
+
+  The basic model is
+
+  * JMX View spawns N
+
+  ** Monitoring Groups which contain N
+
+  *** Monitors that gather data
+
+  *** Expressions that format data
+
+  * These are outputted to rolling log files for external tools (e.g. Nagios or Cacti) to process.
+
+Installation
+
+ The programme is distributed as a archive (tar.gz) to install
+
+ * tar -xjf DISTRIBUTION.tar.gz
+
+ This will give you a folder laid out as follows
+
++--
+
+  /
+  /bin
+  /bin/jmxmonitor
+  /bin/jmxmonitor-svc
+  /lib/jmxmonitor-VERSION-jar-with-dependencies.jar
+  /etc
+
++--
+
+ In bin there are some unix scripts to get you started
+
+ * jmxmonitor - runs it on the commandline
+
+ * jmxmonitor-svc - run it in the background
+
+ * jmxmonitor.xml is a Sun SMF manifest for it.  See {{{sunjmx.html} Sun JMX}} page for details.
+
+Running
+
+ On the command line run
+
+ jmxmonitor -c CONFIGURATION_FILE
+
+
+Configuration
+
+ The default configuration location (for the service) is /opt/etc/jmxmonitor/. In this directory
+ you should have
+
+ * config
+
+ * monitors
+
+ * expressions
+
+ * logback.xml
+
+ See {{{configuration.html}Configuration page}} for more details
+
+
+Ideas for what to monitor
+
+ The {{{jmx.html}JMX}} page provides some pointers of the kind of thing you can monitor.

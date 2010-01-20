@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Copyright 2009 Ben Gidley
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+# VARIABLE can be overridden in calling environment
+
+if [ -z "$USER" ]; then
+    USER='nobody'
+fi
+if [ -z "$JMXMONITOR_HOME" ]; then
+    JMXMONITOR_HOME='/opt/jmxmonitor'
+fi
+if [ -z "$JMXMONITOR_CONFIG" ]; then
+    JMXMONITOR_CONFIG='/opt/jmxmonitor/etc/config.properties'
+fi
+
+case "$1" in
+    'start')
+        su - $USER -c "cd $JMXMONITOR_HOME; nohup ./bin/jmxmonitor -c $JMXMONITOR_CONFIG"
+    ;;
+
+    'stop')
+    # To stop telnet to localhost and send stop key.
+        su - $USER -c "cd $JMXMONITOR_HOME; nohup ./bin/jmxmonitor -c $JMXMONITOR_CONFIG -stop"
+    ;;
+esac
+
+exit 0
