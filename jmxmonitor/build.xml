@@ -19,7 +19,7 @@
         packages up the programme
     </description>
 
-    <property name="output" value="${target}/distro"/>
+    <property name="output" value="${target}/jmxmonitor"/>
 
 
     <target name="checkClover">
@@ -54,6 +54,8 @@
     </target>
 
     <target name="package" depends="copy" unless="isCloverLifeCycle">
-         <tar destfile="${target}/jmxmonitor-${version}.tar.bz2" compression="bzip2" basedir="${output}"/>
+         <tar destfile="${target}/jmxmonitor-${version}.tar.bz2" compression="bzip2">
+            <tarfileset dir="${output}" prefix="jmxmonitor" />    
+         </tar>
     </target>
 </project>
