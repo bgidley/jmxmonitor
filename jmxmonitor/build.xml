@@ -23,12 +23,12 @@
 
 
     <target name="checkClover">
-        <condition property="isCloverLifecycle">
+        <condition property="isCloverLifeCycle">
             <contains string="${target}" substring="clover"/>
         </condition>
     </target>
 
-    <target name="copy" unless="isCloverLifecycle" depends="checkClover">
+    <target name="copy" unless="isCloverLifeCycle" depends="checkClover">
         <delete dir="${output}" quiet="true"/>
         <mkdir dir="${output}"/>
         <mkdir dir="${output}/bin"/>
