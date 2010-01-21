@@ -53,7 +53,7 @@
         </chmod>
     </target>
 
-    <target name="package" depends="copy" unless="isCloverLifeCycle">
+    <target name="package" depends="copy, checkClover" unless="isCloverLifeCycle">
          <tar destfile="${target}/jmxmonitor-${version}.tar.bz2" compression="bzip2">
             <tarfileset dir="${output}" prefix="jmxmonitor" />    
          </tar>
