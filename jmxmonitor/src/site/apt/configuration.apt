@@ -88,6 +88,7 @@ jmxmonitor.url1.ping.attribute=Ping
  ** jmxmonitor.URL_NAME.ATTRIBUTE_NAME.objectName - Sets the object name to link to this attribute. The object
  name is the name of the containing MBean in JConsole. You can copy/paste this from Jconsole.
  These CAN contain wild cards, if this matches more that one bean the discriminator MUST be supplied.
+ These often contain the ',' as this is read with commons-configuration you MUST escape , with \
 
  ** jmxmonitor.URL_NAME.ATTRIBUTE_NAME.attribute - The attribute to monitor
 
