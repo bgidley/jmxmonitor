@@ -1,0 +1,33 @@
+
+JMX Attributes
+
+ The JVM exposes a range of extremely useful monitoring locations
+
+* Core JVM
+
+*--+--+--+
+| ObjectName | Attributes | Notes
+*--+--+--+
+| java.lang:type=ClassLoading | LoadedClassCount | |
+*--+--+--+
+| java.lang:type=GarbageCollector,name=ConcurrentMarkSweep	| CollectionTime | |
+| | CollectionCount |  |
+*--+--+--+
+| java.lang:type=GarbageCollector,name=ParNew | CollectionTime | |
+| | CollectionCount |  |
+*--+--+--+
+| java.lang:type=Memory	| HeapMemoryUsage.commited | |
+| | HeapMemoryUsage.used | |
+| | NonHeapMemoryUsage.commited | |
+| | NonHeapMemoryUsage.used | |
+*--+--+--+
+| java.lang:type=Threading | ThreadCount | |
+*--+--+--+
+
+* C3P0
+
+ The {{{http://www.mchange.com/projects/c3p0/index.html}C3PO}} connection pool provides detailed JMX instrumentation.
+
+ The attributes let you monitor all aspects of the pool the operations are detailed on {{http://www.mchange.com/projects/c3p0/apidocs/com/mchange/v2/c3p0/PooledDataSource.html}}
+
+ Due to C3P0 naming of the beans you have to use a wildcard object name (and if using more that one connection a discrimator) to monitor them. 
