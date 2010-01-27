@@ -8,7 +8,7 @@
     <description>A tool to monitor JMX enabled applications</description>
     <groupId>uk.co.gidley.jmxmonitor</groupId>
     <artifactId>jmxmonitor</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
 
     <url>http://jmxmonitor.sourceforge.net</url>
