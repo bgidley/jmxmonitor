@@ -226,7 +226,7 @@ public class MonitoringGroup implements Runnable {
 				long currentRun = new Date().getTime();
 				logger.debug("Checking interval for {} at {}", name, currentRun);
 
-				if (lastRun == null || lastRun + interval > currentRun) {
+				if (lastRun == null || lastRun + interval < currentRun) {
 					logger.debug("Running interval for {} at {}", name, currentRun);
 
 					// Run Monitors
