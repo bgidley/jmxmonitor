@@ -153,6 +153,7 @@ public class MonitoringGroup implements Runnable {
 			logger.debug("JMX connection made {}", jmxc);
 			MonitoringGroup.MonitorUrlHolder monitorUrlHolder = monitorUrlHolders.get(monitorUrlKey);
 			monitorUrlHolder.setmBeanServerConnection(jmxc.getMBeanServerConnection());
+			monitorUrlHolder.getMonitors().clear();
 
 			// Parse monitors inside this
 			List<String> loadedMonitors = new ArrayList<String>();
@@ -232,8 +233,9 @@ public class MonitoringGroup implements Runnable {
 					// Run Monitors
 					for (String monitorUrlHolderKey : monitorUrlHolders.keySet()) {
 						MonitorUrlHolder monitorUrlHolder = monitorUrlHolders.get(monitorUrlHolderKey);
-						if (monitorUrlHolder.getmBeanServerConnection() == null) {
-							logger.debug("Reinitialising monitors as they are not initialised");
+
+						if (isFailed(monitorUrlHolder)) {
+							logger.debug("Reinitialising monitors as they are not connected");
 							initialiseMonitorUrl(monitorUrlHolder.getUrl(), monitorsConfiguration);
 						} else {
 							logger.debug("Executing Monitors");
@@ -263,8 +265,6 @@ public class MonitoringGroup implements Runnable {
 
 						}
 					}
-
-
 					// Run and output expressions
 					lastRun = currentRun;
 				}
@@ -284,6 +284,21 @@ public class MonitoringGroup implements Runnable {
 
 		}
 
+	}
+
+	private boolean isFailed(MonitorUrlHolder monitorUrlHolder) {
+		if (monitorUrlHolder == null || monitorUrlHolder.getmBeanServerConnection() == null) {
+			return true;
+		}
+		try {
+			monitorUrlHolder.getmBeanServerConnection().getMBeanCount();
+		} catch (IOException e) {
+			logger.warn("Connection to JMX not functioning {}", e);
+			monitorUrlHolder.setmBeanServerConnection(null);
+			return true;
+		}
+
+		return false;
 	}
 
 	private class MonitorUrlHolder {
