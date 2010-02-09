@@ -227,6 +227,8 @@ public class MonitoringGroup implements Runnable {
 				long currentRun = new Date().getTime();
 				logger.debug("Checking interval for {} at {}", name, currentRun);
 
+				ScriptEngine scriptEngine = scriptEngineManager.getEngineByName(
+						"JavaScript");
 				if (lastRun == null || lastRun + interval < currentRun) {
 					logger.debug("Running interval for {} at {}", name, currentRun);
 
@@ -248,21 +250,18 @@ public class MonitoringGroup implements Runnable {
 									logger.error("{}", e);
 								}
 							}
-							ScriptEngine scriptEngine = scriptEngineManager.getEngineByName(
-									"JavaScript");
+
 							for (String key : results.keySet()) {
 								scriptEngine.put(key, results.get(key));
 							}
-
-							for (String expression : expressions) {
-								try {
-									Object output = scriptEngine.eval(expression);
-									outputLogger.info("{}", output);
-								} catch (ScriptException e) {
-									logger.warn("Script Error {}", e);
-								}
-							}
-
+						}
+					}
+					for (String expression : expressions) {
+						try {
+							Object output = scriptEngine.eval(expression);
+							outputLogger.info("{}", output);
+						} catch (ScriptException e) {
+							logger.warn("Script Error {}", e);
 						}
 					}
 					// Run and output expressions

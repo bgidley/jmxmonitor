@@ -14,8 +14,8 @@
     <url>http://jmxmonitor.sourceforge.net</url>
 
     <scm>
-        <connection>scm:svn:https://jmxmonitor.svn.sourceforge.net/svnroot/jmxmonitor/</connection>
-        <developerConnection>scm:git:http://github.com/bgidley/jmxmonitor.git</developerConnection>
+        <connection>scm:git:http://github.com/bgidley/jmxmonitor.git</connection>
+        <developerConnection>scm:git:git@github.com:bgidley/jmxmonitor.git</developerConnection>
         <url>http://github.com/bgidley/jmxmonitor</url>
     </scm>
 
