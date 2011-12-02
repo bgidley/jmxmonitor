@@ -194,7 +194,7 @@
         <!-- Testing -->
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
+            <artifactId>hamcrest-library</artifactId>
             <version>1.2</version>
         </dependency>
         <dependency>
@@ -207,6 +207,7 @@
             <artifactId>testng</artifactId>
             <version>5.9</version>
             <scope>test</scope>
+            <classifier>jdk15</classifier>
             <exclusions>
                 <exclusion>
                     <artifactId>junit</artifactId>
