@@ -63,6 +63,7 @@ public class MonitoringGroup implements Runnable {
 
 	public MonitoringGroup() {
 		monitorsConfiguration.setThrowExceptionOnMissing(true);
+		monitorsConfiguration.setDelimiterParsingDisabled(true);
 		expressionsConfiguration.setThrowExceptionOnMissing(true);
 		scriptEngineManager = new ScriptEngineManager();
 
@@ -96,7 +97,11 @@ public class MonitoringGroup implements Runnable {
 			this.name = name;
 			outputLogger = LoggerFactory.getLogger(MONITORING_GROUP + name);
 
-			monitorsConfiguration.addConfiguration(new PropertiesConfiguration(monitorsConfigurationFile));
+			PropertiesConfiguration propertiesConfiguration = new PropertiesConfiguration();
+			propertiesConfiguration.setDelimiterParsingDisabled(monitorsConfiguration.isDelimiterParsingDisabled());
+			propertiesConfiguration.setFile(monitorsConfigurationFile);
+			propertiesConfiguration.load();
+			monitorsConfiguration.addConfiguration(propertiesConfiguration);
 			expressionsConfiguration.addConfiguration(new PropertiesConfiguration(expressionsConfigurationFile));
 
 			initialiseMonitors();
